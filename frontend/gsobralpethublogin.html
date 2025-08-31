@@ -114,7 +114,7 @@ a:hover {
 
   <main>
     <section class="form-container">
-      <form>
+      <form id="registroForm">
         <label for="email">Email</label>
         <input type="email" id="email" name="email" />
 
@@ -131,15 +131,45 @@ a:hover {
 </body>
 <script type="module">
 
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  const supabaseUrl = "https://kdlhsjtaasqyitrwgawt.supabase.co";
-  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14"; 
+
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  document.getElementById("registroForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('senha').value
+
+    if (!email||!senha)
+  {
+     alert("Dados incompletos");
+      return;
+  }
+   const { data, error } = await client
+      .from("usuario")
+      .select("*")
+      .eq("email",email)
+      .eq("senha",senha)
+      .single()
+      if(error){
+        alert("email ou senha incorretos :(");
+      }     
+      else if(data)
+      {
+        alert("Autenticação realizada com sucesso!");
+      }
+      
+  
+  
+  
 
 
 
-
+  });
 
 </script>
 </html>
