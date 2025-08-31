@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSobral Pethub</title>
+    
     <style>
         * {
   margin: 0;
@@ -108,6 +109,7 @@ a:hover {
     <header>
     <h1>GSobral PetHub</h1>
     <p class="subtitulo">Logar</p>
+    
   </header>
 
   <main>
@@ -120,11 +122,24 @@ a:hover {
         <input type="password" id="senha" name="senha" />
 
         <button type="submit">Logar</button>
-         <a href="">Registrar-se</a>
+         <a href="gsobralpethubregistro.html">Registrar-se</a>
       </form>
     </section>
     
   </main>
   
 </body>
+<script type="module">
+
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  const supabaseUrl = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+
+
+
+
+</script>
 </html>

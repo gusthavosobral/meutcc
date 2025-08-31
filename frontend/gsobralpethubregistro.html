@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSobral Pethub</title>
+
+    <style>
+        * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(to bottom, #130a12, #1e1e2f);
+  min-height: 100vh;
+  font-family: Cambria, serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background-color: white;
+  color: black;
+  text-align: center;
+  padding: 40px 0 20px;
+  
+}
+
+header h1 {
+  font-size: 40px;
+}
+
+.subtitulo {
+  font-style: italic;
+  font-size: 20px;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+}
+
+.form-container {
+  background-color: #2e2e2e;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 400px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 8px;
+  font-size: 16px;
+  
+}
+
+input {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+ 
+  
+}
+
+button {
+  padding: 12px;
+  background-color: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #dc2626;
+}
+a {
+  padding-top: 10px;
+  color: #ef4444;             /* Cor do texto */
+  text-decoration: none;      /* Remove sublinhado */
+  font-weight: bold;          /* Deixa mais forte */
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #dc2626;            
+}
+
+    </style>
+</head>
+<body>
+    <header>
+    <h1>GSobral PetHub</h1>
+    <p class="subtitulo">Registro</p>
+     
+  </header>
+
+  <main>
+    <section class="form-container">
+     <form id="registroForm"
+
+>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" />
+
+        <label for="senha1">Senha</label>
+        <input type="password" id="senha1" name="senha1" />
+
+        <label for="senha2">Confirmar Senha</label> 
+        <input type="password" id="senha2" name="senha2" />
+
+        <label for="tipo">Tipo de Usuário</label>  
+        <input type="text" name="tipo"  list="tipo">
+        <datalist id="tipo">
+        <option value="">tipo de usuário</option>
+        <option value="petshop">petshop</option>
+        <option value="ong">ong</option>
+        <option value="doador">doador</option>
+        <option value="adotador">adotador</option>
+        <option value="petsitter">petsitter</option>
+        <option value="cliente">cliente</option>
+
+  </datalist>
+
+        <button type="submit">Registrar</button>
+         
+      </form>
+      
+    </section>
+    
+  </main>
+</body>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+
+  const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14"; 
+
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  document.getElementById("registroForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const senha1 = document.getElementById("senha1").value;
+    const senha2 = document.getElementById("senha2").value;
+    const tipo = document.getElementsByName("tipo")[0].value.trim();
+
+    if (!email || !senha1 || !senha2 || !tipo) {
+      alert("Dados incompletos");
+      return;
+    }
+
+    if (senha1 !== senha2) {
+      alert("Senhas diferentes");
+      return;
+    }
+
+    const { data, error } = await client
+      .from("usuario")
+      .insert([{ email, senha: senha1, tipousuario: tipo }]);
+
+    if (error) {
+      console.error("Erro:", error);
+      alert("Erro ao registrar. Verifique os dados.");
+    } else {
+      alert("Registro realizado com sucesso!");
+      document.getElementById("registroForm").reset();
+    }
+  });
+</script>
+
+
+</html>
