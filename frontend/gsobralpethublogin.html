@@ -137,10 +137,20 @@ a:hover {
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14"; 
 
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// importa a função necessária para manipular bancos de dados supabase e depois usa as chaves necessárias para especificar o projeto como parâmetros
+  
+async function gerarHashSHA256(texto) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  }
 
-  document.getElementById("registroForm").addEventListener("submit", async function (event) {
+
+document.getElementById("registroForm").addEventListener("submit", async function (event) { //quando o evento submit do registroform id for realizado, ele vai realizar a função apresentada
     event.preventDefault();
-
+    
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value
 
@@ -149,11 +159,13 @@ a:hover {
      alert("Dados incompletos");
       return;
   }
+  const hash = await gerarHashSHA256(senha);
+  console.log(hash);
    const { data, error } = await client
       .from("usuario")
       .select("*")
       .eq("email",email)
-      .eq("senha",senha)
+      .eq("senha",hash)
       .single()
       if(error){
         alert("email ou senha incorretos :(");
@@ -162,7 +174,7 @@ a:hover {
       {
         alert("Autenticação realizada com sucesso!");
       }
-      
+    
   
   
   

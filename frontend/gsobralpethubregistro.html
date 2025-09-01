@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSobral Pethub</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/src/sha256.min.js"></script> 
 
     <style>
         * {
@@ -163,15 +164,24 @@ a:hover {
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14"; 
 
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    async function gerarHashSHA256(texto) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
 
   document.getElementById("registroForm").addEventListener("submit", async function (event) {
     event.preventDefault();
-
+    
     const email = document.getElementById("email").value.trim();
     const senha1 = document.getElementById("senha1").value;
     const senha2 = document.getElementById("senha2").value;
     const tipo = document.getElementsByName("tipo")[0].value.trim();
-
+   
     if (!email || !senha1 || !senha2 || !tipo) {
       alert("Dados incompletos");
       return;
@@ -181,10 +191,12 @@ a:hover {
       alert("Senhas diferentes");
       return;
     }
+    
+    const hash = await gerarHashSHA256(senha1);
 
     const { data, error } = await client
       .from("usuario")
-      .insert([{ email, senha: senha1, tipousuario: tipo }]);
+      .insert([{ email, senha: hash,tipousuario:tipo }]);
 
     if (error) {
       console.error("Erro:", error);
