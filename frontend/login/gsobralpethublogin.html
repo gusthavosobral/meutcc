@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSobral Pethub</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="gsobralpethublogin.css">
+   
+    
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="moon-accent"></div>
+            <div class="crescent"></div>
+            
+            <div class="logo-section">
+                <h1 class="logo">GSobralPetHub</h1>
+                <p class="tagline">Conectando corações, cuidando de patas</p>
+            </div>
+
+            <form class="login-form" id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">E-mail</label>
+                    <input type="email" id="email" class="form-input" placeholder="Digite seu e-mail" required>
+                </div>
+
+                <div class="form-group" style="position: relative;">
+                    <label class="form-label" for="password">Senha</label>
+                    <input type="password" id="password" class="form-input" placeholder="Digite sua senha" required>
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword()"></i>
+                </div>
+
+                <div class="forgot-password">
+                    <a href="#" onclick="showForgotPassword()">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="login-btn">Entrar</button>
+            </form>
+
+            <div class="divider">
+                <span>Novo por aqui?</span>
+            </div>
+
+            <div class="register-link">
+                Não tem conta? <a href="../registro/gsobralpethubregistro.html">Criar conta</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+  
+  const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+  const client = createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  async function gerarHashSHA256(texto) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+    //MÉTODO PARA EFETUAR O LOGIN//
+   document.getElementById("login-form").addEventListener("submit", async function login (event) { 
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('password').value
+    
+
+    if (!email||!senha)
+  {
+     alert("Dados incompletos");
+      return;
+  }
+  
+  const hash = await gerarHashSHA256(senha);
+  const resultado = false;
+   const { data, error } = await client
+      .from("usuario")
+      .select("*")
+      .eq("email",email)
+      .eq("senha",hash)
+      .single()
+      if(error){
+        alert("email ou senha incorretos :(");
+      }     
+      else if(data)
+      { 
+        alert("Autenticação realizada com sucesso!");
+        localStorage.setItem("email",email);
+        window.location.href = "../gsobralpethubpaginainicial.html"
+        
+      }  
+    
+    });    
+</script>
+<script>
+                                                //FUNCÕES CSS//
+
+//ocultar e desocultar senha//
+function togglePassword() {       
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.querySelector('.password-toggle'); 
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+//método css para decorar os inputs//
+document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+                this.parentElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            });})
+</script>
+</html>
