@@ -5,210 +5,293 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GSobral PetHub</title>
   <link rel="stylesheet" href="gsobralpethubpaginainicial.css">
+  <style>
+    /* Estilos para as novas seções */
+    .about-section, .contact-section {
+      padding: 80px 40px;
+      background: rgba(0, 0, 0, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-  
-   <body>
+    .about-content, .contact-content {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .about-section h2, .contact-section h2 {
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+
+    .about-section p {
+      font-size: 15px;
+      line-height: 1.8;
+      opacity: 0.7;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .contact-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .contact-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .contact-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.5;
+      margin-bottom: 8px;
+    }
+
+    .contact-value {
+      font-size: 16px;
+      letter-spacing: 1px;
+      font-weight: 400;
+    }
+
+    .contact-value a {
+      color: #fff;
+      text-decoration: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .contact-value a:hover {
+      opacity: 0.7;
+    }
+
+    /* Scroll suave */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    @media (max-width: 768px) {
+      .about-section, .contact-section {
+        padding: 60px 20px;
+      }
+
+      .about-section h2, .contact-section h2 {
+        font-size: 22px;
+        letter-spacing: 2px;
+      }
+
+      .about-section p {
+        font-size: 14px;
+      }
+
+      .contact-value {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
     
-    <header class="header">
-
-        <div class="logo">GSobralPetHub</div>
-
-        <nav class="nav-menu">
-            <a href="#" class="nav-item">Sobre Nós</a>
-            <a href="#" class="nav-item">Contato</a>
-            <a href="#" class="nav-item">Editar Perfil</a>
-
-            <div class="profile-icon" onclick="toggleModal()"> 
+<header class="header">
+    <div class="logo">GSobralPetHub</div>
+    <nav class="nav-menu">
+        <a href="#sobre-nos" class="nav-item">Sobre Nós</a>
+        <a href="#contato" class="nav-item">Contato</a>
+        <a href="#" class="nav-item">Editar Perfil</a>
+        <div class="profile-icon" id="profileIcon" onclick="toggleModal()"> 
             <span style="font-size: 18px;">👤</span>
-            </div>
-
-        </nav>
-
-    </header>
-
-   
-
-
-
-
-    <main class="main-content">
-       
-        <section class="hero-section">
-            <video class="video-background" autoplay muted loop>
-                
-                <source src="ssstik.io_@violetcalico_1757454597306.mp4" type="video/mp4">
-                
-            </video>
-            
-            <div class="video-overlay"></div> 
-            
-            <h1 class="main-title">GSobralPetHub</h1>
-            <p class="subtitle">Conectando Você ao Mercado Pet</p>
-
-        </section>
-
-        <!--FILTRO-->
-        <section class="services-section">
-            <h2 class="section-title">Prestadores de Serviços</h2>
-            
-            <div class="filter-container">
-                <button class="filter-btn active" onclick="filterProviders('todos')">Todos</button>
-                <button class="filter-btn" onclick="filterProviders('veterinario')">Veterinários</button>
-                <button class="filter-btn" onclick="filterProviders('petshop')">Pet Shops</button>
-                <button class="filter-btn" onclick="filterProviders('cuidador')">PetSitters</button>
-                <button class="filter-btn" onclick="filterProviders('adestrador')">Ongs</button>
-                <button class="filter-btn" onclick="filterProviders('doador')">Doador</button>
-            </div>
-
-            <!--Perfis-->
-            <div class="providers-grid" id="providersGrid">
-              
-            </div>
-        </section>
-    </main>
-
-    
-    <div class="modal-overlay hidden" id="modalOverlay">
-        
-        <div class="modal">
-
-            <button class="modal-close" onclick="toggleModal()">&times;</button>
-            <h3 class="modal-title">Complete seu Perfil</h3>
-            
-            <div class="photo-upload">
-                
-                <div class="photo-circle" id="photoCircle" onclick="document.getElementById('photoInput').click()">
-                    <span class="photo-placeholder">📷</span>
-                </div>
-
-                <span class="photo-label">Adicionar Foto</span>
-
-                <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
-           
-            </div>
-
-            <form id="userForm">
-
-                <div class="form-group">
-                    
-                    <label class="form-label">Nome de Usuário</label>
-                    <input type="text" class="form-input" id="username" required>
-                
-                </div>
-
-                <div class="form-group">
-
-                    <label class="form-label">Descrição</label>
-                    <textarea class="form-textarea" id="description" required placeholder="Conte um pouco sobre você..."></textarea>
-                
-                </div>
-
-
-                
-                <div class="form-group">
-
-                    <label class="form-label">Localização</label>
-                    <input type="text" class="form-input" id="location" required placeholder="Cidade, Estado">
-                    <div id="sugestões"></div>
-
-                </div>
-
-                <button type="submit" class="modal-btn">Salvar Perfil</button>
-
-            </form>
         </div>
-    </div>
+    </nav>
+</header>
 
-    <div class="modal-overlay-petsitter hidden" id="modalOverlayPetSitter">
+<main class="main-content">
+    <section class="hero-section">
+        <video class="video-background" autoplay muted loop>
+            <source src="ssstik.io_@violetcalico_1757454597306.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div> 
+        <h1 class="main-title">GSobralPetHub</h1>
+        <p class="subtitle">Conectando Você ao Mercado Pet</p>
+    </section>
 
-        <div class="modal-petsitter">
-
-            <button class="modal-petsitter-close" onclick="togglePetSitterModal()">&times;</button>
-
-            <h3 class="modal-petsitter-title">Serviços de Pet Sitter</h3>
-
-
-            <form id="petSitterForm">
+    <!--FILTRO-->
+    <section class="services-section">
+        <h2 class="section-title">Prestadores de Serviços</h2>
         
-                <div class="petsitter-form-group">
-                
-                    <label class="petsitter-form-label">Selecione os serviços que você oferece</label>
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterProviders('todos')">Todos</button>
+            <button class="filter-btn" onclick="filterProviders('veterinario')">Veterinários</button>
+            <button class="filter-btn" onclick="filterProviders('petshop')">Pet Shops</button>
+            <button class="filter-btn" onclick="filterProviders('petsitter')">PetSitters</button>
+            <button class="filter-btn" onclick="filterProviders('ong')">Ongs</button>
+            <button class="filter-btn" onclick="filterProviders('doador')">Doador</button>
+        </div>
 
-                        <div class="petsitter-checkbox-group">
+        <!--Perfis-->
+        <div class="providers-grid" id="providersGrid"></div>
+    </section>
 
-                        <label class="petsitter-checkbox-item">
+    <!-- Seção Sobre Nós -->
+    <section class="about-section" id="sobre-nos">
+        <div class="about-content">
+            <h2>Sobre Nós</h2>
+            <p>
+                O GSobral PetHub nasceu da paixão por animais e da necessidade de conectar tutores responsáveis 
+                aos melhores profissionais e serviços do mercado pet.
+            </p>
+            <p>
+                Nossa plataforma foi desenvolvida para facilitar a vida de quem ama seus pets, oferecendo 
+                uma rede confiável de veterinários, pet shops, pet sitters, ONGs e doadores comprometidos 
+                com o bem-estar animal.
+            </p>
+            <p>
+                Acreditamos que todo animal merece cuidado, carinho e atenção profissional. Por isso, 
+                trabalhamos diariamente para construir uma comunidade forte e unida em prol dos nossos 
+                melhores amigos de quatro patas.
+            </p>
+        </div>
+    </section>
+
+    <!-- Seção Contato -->
+    <section class="contact-section" id="contato">
+        <div class="contact-content">
+            <h2>Entre em Contato</h2>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <div class="contact-label">Nome</div>
+                    <div class="contact-value">Gusthavo Sobral</div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-label">E-mail</div>
+                    <div class="contact-value">
+                        <a href="gusthavosobralcosta12@gmail.com">gusthavosobralcosta12@gmail.com</a>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-label">Telefone</div>
+                    <div class="contact-value">
+                        <a href="tel:+5521991402078">+55 (21) 99140-2078</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Modal de Perfil -->
+<div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal">
+        <button class="modal-close" onclick="toggleModal()">&times;</button>
+        <h3 class="modal-title">Complete seu Perfil</h3>
+        
+        <div class="photo-upload">
+            <div class="photo-circle" id="photoCircle" onclick="document.getElementById('photoInput').click()">
+                <span class="photo-placeholder">📷</span>
+            </div>
+            <span class="photo-label">Adicionar Foto</span>
+            <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+        </div>
+
+        <form id="userForm">
+            <div class="form-group">
+                <label class="form-label">Nome de Usuário</label>
+                <input type="text" class="form-input" id="username" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descrição</label>
+                <textarea class="form-textarea" id="description" required placeholder="Conte um pouco sobre você..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Localização</label>
+                <input type="text" class="form-input" id="location" required placeholder="Cidade, Estado">
+                <div id="sugestões"></div>
+            </div>
+
+            <button type="submit" class="modal-btn">Salvar Perfil</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal PetSitter -->
+<div class="modal-overlay-petsitter hidden" id="modalOverlayPetSitter">
+    <div class="modal-petsitter">
+        <button class="modal-petsitter-close" onclick="togglePetSitterModal()">&times;</button>
+        <h3 class="modal-petsitter-title">Serviços de Pet Sitter</h3>
+
+        <form id="petSitterForm">
+            <div class="petsitter-form-group">
+                <label class="petsitter-form-label">Selecione os serviços que você oferece</label>
+                <div class="petsitter-checkbox-group">
+                    <label class="petsitter-checkbox-item">
                         <input type="checkbox" name="petsitter-services" value="Petsitter Comum" id="petsitter-comum">
                         <span class="petsitter-checkbox-text">PetSitter Comum</span>
-                    
                     </label>
-
                     <label class="petsitter-checkbox-item">
                         <input type="checkbox" name="petsitter-services" value="Hospedagem" id="petsitter-hospedagem">
                         <span class="petsitter-checkbox-text">Hospedagem</span>
                     </label>
-
                     <label class="petsitter-checkbox-item">
                         <input type="checkbox" name="petsitter-services" value="DogWalker" id="petsitter-dogwalker">
                         <span class="petsitter-checkbox-text">Dog Walker</span>
                     </label>
-
                     <label class="petsitter-checkbox-item">
-
                         <input type="checkbox" name="petsitter-services" value="Hotelzinho" id="petsitter-hotelzinho">
                         <span class="petsitter-checkbox-text">Hotelzinho</span> 
-
                     </label>
-
-                        </div>
                 </div>
-
-                <button type="submit" class="petsitter-modal-btn" id="petsitter-modal-btn">Salvar Serviços</button>
-
-            </form>
+            </div>
+            <button type="submit" class="petsitter-modal-btn" id="petsitter-modal-btn">Salvar Serviços</button>
+        </form>
     </div>
 </div>
 
-   
 <script>   
+// Email do usuário
+let valorRecebido = localStorage.getItem('email');
+console.log(valorRecebido);
 
-// ----------------------------- Receber email como variável para consulta no banco de dados ------------------------- //
-
-     let valorRecebido = localStorage.getItem('email');
-     console.log(valorRecebido);
-//----------------------------------------------------------------------------------------------------------------------//
+// Variável global para armazenar a foto em base64
+let fotoBase64 = null;
 </script>
 
 <script type="module"> 
-
- // ----------------------------------------------> API CIDADES <---------------------------------------------------- //
-
+// API CIDADES
 let cidadesCache = null;
 
-async function buscarCidades(query) 
-
-{       
-        if(cidadesCache===null)
-        {
+async function buscarCidades(query) {       
+    if(cidadesCache===null) {
         const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
         cidadesCache = await response.json();
-        }
-        
-        return cidadesCache.filter(city => 
+    }
+    return cidadesCache.filter(city => 
         city.nome.toLowerCase().includes(query.toLowerCase())).slice(0, 8);
 }
-        
 
-
-//-------------------------------------------- Função para selecionar cidade------------------------------------//
-function selectCity(cityName)
-{  
+function selectCity(cityName) {  
     document.getElementById('location').value = cityName;
     document.getElementById('sugestões').style.display = 'none';
 }
 window.selectCity = selectCity;
-//---------------------------------------------------------------------------------------------------------------//
-
-//---------------------------------------------MANIPULAÇÃO HTML--------------------------------------------------//
 
 document.addEventListener('DOMContentLoaded', function() {
     const lugarInput = document.getElementById('location');
@@ -233,15 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             let html = '';
-            for(var city of filteredCities)
-            {   
+            for(var city of filteredCities) {   
                 const cityName = city.nome;
                 const stateCode = city.microrregiao.mesorregiao.UF.sigla;
                 const fullName = `${cityName}, ${stateCode}`;
-
-               html += `<div onclick="selectCity('${fullName}')">
-                            ${cityName}, ${stateCode}
-                         </div>`;}
+                html += `<div onclick="selectCity('${fullName}')">${cityName}, ${stateCode}</div>`;
+            }
             
             sugestoes.innerHTML = html;
             sugestoes.style.display = 'block';
@@ -259,155 +339,163 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
-//------------------------------------------------------------------------------------------------------------------//
-
-//------------------------------------------------------------------------------------------------------------------//
 </script>
 
 <script type="module">
-//-------------------------------------------BANCO DE DADOS------------------------------------------------------------//
-
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+// BANCO DE DADOS
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
   
-        const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
-        const client = createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-//---------------------------------------- CONSULTA PARA VERIFICAR SE É PETSITTER------------------------------------//
-   window.petSitterPositivo = (async() =>
- {
-  
+// CONSULTA PARA VERIFICAR SE É PETSITTER
+window.petSitterPositivo = (async() => {
     const { data, error } = await client
-      .from("usuario")
-      .select("*")
-      .eq("email",valorRecebido)
-      .eq("tipousuario","petsitter")
+        .from("usuario")
+        .select("*")
+        .eq("email", valorRecebido)
+        .eq("tipousuario", "petsitter")
 
-      if(error){
-       console.log("erro");
-       return null;
-      }     
-      else if(data.length>0)
-      {             
+    if(error) {
+        console.log("erro");
+        return null;
+    } else if(data.length > 0) {             
         console.log("É PET SITTER");
         return true;
-      }
-      else if(data.length===0)
-      {
+    } else if(data.length === 0) {
         console.log("não é pet sitter");
         return false;
-      }
-
-    })()
-     
-//---------------------------------Verificar se o a coluna tipoPetSitter está preenchida------------------------------//
-    window.tipoPetSitterVerificado = (async() => {
-    const{data,error} = await client
-    .from("usuario")
-    .select("tipoPetSitter")
-    .eq("email",valorRecebido)
-    .eq("tipousuario", "petsitter");
-    
-    if(error)
-    {console.log("Houve um erro, sinto muito!");
-     return null;
     }
-    else if (!data[0].tipoPetSitter)
-    {return false;}  
-
-    else 
-    {return true}
-    }) ();
-//==========================================Inserção dos dados do PETSITTER==========================================//  
-   
-    document.getElementById("petSitterForm").addEventListener('submit',async function (e) {
-
-    e.preventDefault();
-
-    let textoListaServicos = listaServicos.join(", ");
-
-    const{data,error} = await client
-    .from("usuario")
-    .update({ tipoPetSitter: textoListaServicos})
-    .eq("email",valorRecebido)
-    .select();
-    if(data.length>0)
-    {
-    alert("Dados inseridos, Parabens!");
-    togglePetSitterModal();
-    }
-    else if(error)
-    alert("erro"); 
-    
-    else
-    alert("Dados não inseridos");
-
-    
-    })
-
-//------------------------------------Verificação dos Dados Gerais ----------------------------------------------------//
-window.verificarDados = (async function()
-{
-
-let i=0;
-try{
-    const {data, error} = await client
-    .from("usuario")
-    .select("nomeUsuario,localização,descricao,email")
-    .eq("email",valorRecebido)
-   
-   
-
-    if(error)
-    {
-    alert("erro,sinto muito!");
-    return 0;
-    }
-    else
-    {
-        const usuario = data[0];
-        const campos = ["nomeUsuario", "localização", "descricao", "email"];
-
-        for(const campo of campos)
-        {
-            if(usuario[campo])  
-            { 
-            i++;
-            }
-        console.log(data);
-        }
-    }
-    console.log(i);
-    return i;
-  
-}
-catch(erro)
-{
-    console.error(`erro na verificação: ${erro}`);
-    return 0;
-}
 })();
 
+// Verificar se o a coluna tipoPetSitter está preenchida
+window.tipoPetSitterVerificado = (async() => {
+    const {data, error} = await client
+        .from("usuario")
+        .select("tipoPetSitter")
+        .eq("email", valorRecebido)
+        .eq("tipousuario", "petsitter");
+    
+    if(error) {
+        console.log("Houve um erro, sinto muito!");
+        return null;
+    } else if (!data[0].tipoPetSitter) {
+        return false;
+    } else {
+        return true;
+    }
+})();
 
+// Inserção dos dados do PETSITTER
+document.getElementById("petSitterForm").addEventListener('submit', async function (e) {
+    e.preventDefault();
+    let textoListaServicos = listaServicos.join(", ");
 
-//=========================================== INSERÇÃO DOS DADOS NA TABELA =========================================//
+    const {data, error} = await client
+        .from("usuario")
+        .update({ tipoPetSitter: textoListaServicos})
+        .eq("email", valorRecebido)
+        .select();
+        
+    if(data.length > 0) {
+        alert("Dados inseridos, Parabens!");
+        togglePetSitterModal();
+    } else if(error) {
+        alert("erro"); 
+    } else {
+        alert("Dados não inseridos");
+    }
+});
 
+// Verificação dos Dados Gerais
+window.verificarDados = (async function() {
+    let i = 0;
+    try {
+        const {data, error} = await client
+            .from("usuario")
+            .select("nomeUsuario,localização,descricao,email")
+            .eq("email", valorRecebido);
+
+        if(error) {
+            alert("erro,sinto muito!");
+            return 0;
+        } else {
+            const usuario = data[0];
+            const campos = ["nomeUsuario", "localização", "descricao", "email"];
+
+            for(const campo of campos) {
+                if(usuario[campo]) { 
+                    i++;
+                }
+                console.log(data);
+            }
+        }
+        console.log(i);
+        return i;
+    } catch(erro) {
+        console.error(`erro na verificação: ${erro}`);
+        return 0;
+    }
+})();
+
+// CARREGAR FOTO DO USUÁRIO ATUAL
+window.carregarFotoUsuario = async function() {
+    try {
+        const { data, error } = await client
+            .from("usuario")
+            .select("fotoPerfil")
+            .eq("email", valorRecebido)
+            .single();
+
+        if (error) {
+            console.error("Erro ao carregar foto:", error);
+            return null;
+        }
+
+        if (data && data.fotoPerfil) {
+            // Atualizar o ícone de perfil no header
+            const profileIcon = document.getElementById('profileIcon');
+            profileIcon.style.backgroundImage = `url(${data.fotoPerfil})`;
+            profileIcon.style.backgroundSize = 'cover';
+            profileIcon.style.backgroundPosition = 'center';
+            profileIcon.innerHTML = '';
+            
+            return data.fotoPerfil;
+        }
+        return null;
+    } catch (erro) {
+        console.error("Erro ao carregar foto:", erro);
+        return null;
+    }
+};
+
+// INSERÇÃO DOS DADOS NA TABELA (INCLUINDO FOTO)
 window.inserirDados = async function() {
     const userName = document.getElementById("username").value;
     const descricao = document.getElementById("description").value;
     const localizacao = document.getElementById("location").value;
 
+    const dadosParaAtualizar = { 
+        nomeUsuario: userName,      
+        descricao: descricao,       
+        localização: localizacao    
+    };
+
+    // Adicionar foto se existir
+    if (fotoBase64) {
+        dadosParaAtualizar.fotoPerfil = fotoBase64;
+    }
+
     const { data, error } = await client
         .from("usuario")
-        .update({ 
-            nomeUsuario: userName,      
-            descricao: descricao,       
-            localização: localizacao    
-        })
+        .update(dadosParaAtualizar)
         .eq("email", valorRecebido)
         .select();
+        
     if (data && data.length > 0) {
+        // Atualizar o ícone de perfil após salvar
+        await window.carregarFotoUsuario();
         return true;
     } else if (error) {
         alert(`erro: ${error.message}`);
@@ -415,203 +503,252 @@ window.inserirDados = async function() {
     }
 };
 
+// EXIBIR DADOS REAIS
+let providersData = []; 
+let currentFilter = 'todos';
+let userProfile = null;
 
+window.buscarPrestadores = async function() {
+    try {
+        const { data, error } = await client
+            .from("usuario")
+            .select("*")
+            .not('tipousuario', 'eq', 'adotador')
+            .not('tipousuario', 'eq', 'cliente');
+        
+        if (error) {
+            console.error("Erro ao buscar prestadores:", error);
+            return [];
+        }   
+             
+        const prestadoresFormatados = data.map(usuario => ({
+            id: usuario.id,
+            name: usuario.nomeUsuario || "Nome não informado",
+            type: usuario.tipousuario,
+            location: usuario.localização || "Localização não informada",
+            description: usuario.descricao || "Sem descrição",
+            avatar: usuario.fotoPerfil || "", 
+            tipoPetSitter: usuario.tipoPetSitter || null 
+        }));
+        
+        console.log("Prestadores carregados:", prestadoresFormatados);
+        return prestadoresFormatados;
+    } catch (erro) {
+        console.error("Erro na busca:", erro);
+        return [];
+    }   
+}();
+
+// Buscar Por Tipo
+window.buscarPorTipo = async function buscarPorTipo(tipo) {
+    if (tipo === 'todos') {
+        return await buscarPrestadores();
+    }
+    
+    try {
+        const { data, error } = await client
+            .from("usuario")
+            .select("*")
+            .eq('tipousuario', tipo);
+        
+        if (error) {
+            console.error("Erro ao filtrar:", error);
+            return [];
+        }
+        
+        return data.map(usuario => ({
+            id: usuario.id,
+            name: usuario.nomeUsuario || "Nome não informado",
+            type: usuario.tipousuario,
+            location: usuario.localização || "Localização não informada",
+            description: usuario.descricao || "Sem descrição",
+            avatar: usuario.fotoPerfil || "",
+            tipoPetSitter: usuario.tipoPetSitter || null
+        }));
+    } catch (erro) {
+        console.error("Erro ao filtrar:", erro);
+        return [];
+    }
+};
 </script>
 
-
 <script>
-
-//--------------------------Funções para inserção de dados específicos de [somente petsitters] -------------------------//
- document.addEventListener('DOMContentLoaded', async function (e) {
-    
-    var petSitterPositivo =  await window.petSitterPositivo;
-     console.log(petSitterPositivo);
+// Funções para inserção de dados específicos de [somente petsitters]
+document.addEventListener('DOMContentLoaded', async function (e) {
+    var petSitterPositivo = await window.petSitterPositivo;
+    console.log(petSitterPositivo);
 
     var tipoPetSitterVerificado = await window.tipoPetSitterVerificado;
-    console.log(tipoPetSitterVerificado) 
+    console.log(tipoPetSitterVerificado);
 
-     if(petSitterPositivo === true && tipoPetSitterVerificado === false)
- {
-     document.getElementById('modalOverlayPetSitter').classList.remove('hidden'); }  
- })      
+    if(petSitterPositivo === true && tipoPetSitterVerificado === false) {
+        document.getElementById('modalOverlayPetSitter').classList.remove('hidden');
+    }
+    
+    // Carregar foto do usuário ao carregar a página
+    await window.carregarFotoUsuario();
+});      
  
 function togglePetSitterModal() {
     const modal = document.getElementById('modalOverlayPetSitter');
     modal.classList.add('hidden');
 }
-//------------------------------------------função do array de serviços--------------------------------------------//
 
+// Array de serviços
 let listaServicos = [];
 
-document.querySelectorAll(".petsitter-checkbox-item input[type='checkbox']").forEach(x=> {
-x.addEventListener('change', async function(){
-    
-const valor = this.value;
-  
-if(this.checked)
-{
-    if(!listaServicos.includes(valor)){
-    listaServicos.push(valor);}
-
-}
-else
-{   const index = listaServicos.indexOf(valor);
-    
-    if (index > -1) 
-{    
-    listaServicos.splice(index, 1); 
-}                                    
-}
- 
-console.log(listaServicos);
-    })})
-
-
-//---------------------------------FUNÇÃO PARA INSERIR OS DADOS GERAIS PELO BTN--------------------------------------//
-
-
-document.getElementById("userForm").addEventListener('submit',async function(e){
-
-const inserido = await window.inserirDados();
-console.log(inserido);
-})
-
-
-
-
-//-------------------------------------------------------------------------------------------------------------------//
- 
- // Sample providers data - replace with actual database data
-        const providersData = [
-            {
-                id: 1,
-                name: "Dr. Maria Santos",
-                type: "veterinario",
-                location: "Rio de Janeiro, RJ",
-                description: "Veterinária especializada em clínica geral com 10 anos de experiência.",
-                avatar: ""
-            },
-            {
-                id: 2,
-                name: "Pet Care Center",
-                type: "petshop",
-                location: "São Paulo, SP",
-                description: "Pet shop completo com produtos e serviços de qualidade.",
-                avatar: ""
-            },
-            {
-                id: 3,
-                name: "João Silva",
-                type: "cuidador",
-                location: "Belo Horizonte, MG",
-                description: "Cuidador experiente e carinhoso, disponível para pet sitting.",
-                avatar: ""
-            },
-            {
-                id: 4,
-                name: "Adestramento Pro",
-                type: "adestrador",
-                location: "João Pessoa, PB",
-                description: "Adestramento profissional com técnicas modernas e eficazes.",
-                avatar: ""
-            }
-        ];
-
-        let currentFilter = 'todos';
-        let userProfile = null;
-//-------------------------------- Esconder ou Exibir a parte da inserção dos dados gerais ----------------------------//
-  
-            
-            window.addEventListener('DOMContentLoaded',async function(){
-            let camposPreenchidos = await verificarDados;
-            if( camposPreenchidos<4 && camposPreenchidos>0)
-            document.getElementById('modalOverlay').classList.remove('hidden');
-            else if(camposPreenchidos===0)
-            {
-            window.location.href = "login/gsobralpethublogin.html";
-            }})
-
-
-        async function toggleModal() {
-           window.location.reload();//tornar aquela função utilizável e depois botá-la aq
-        }
-//--------------------------------------------parte ainda não revisada---------------------------------------------//
-        function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const photoCircle = document.getElementById('photoCircle');
-                    photoCircle.style.backgroundImage = `url(${e.target.result})`;
-                    photoCircle.innerHTML = '';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function filterProviders(type) {
-            currentFilter = type;
-            
-            // Update filter buttons
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            renderProviders();
-        }
-
-        function renderProviders() {
-            const grid = document.getElementById('providersGrid');
-            const filteredProviders = currentFilter === 'todos' 
-                ? providersData 
-                : providersData.filter(provider => provider.type === currentFilter);
-            
-            grid.innerHTML = filteredProviders.map(provider => `
-                <div class="provider-card">
-                    <div class="provider-avatar" ${provider.avatar ? `style="background-image: url(${provider.avatar})"` : ''}></div>
-                    <h3 class="provider-name">${provider.name}</h3>
-                    <p class="provider-type">${getTypeLabel(provider.type)}</p>
-                    <p class="provider-location">${provider.location}</p>
-                    <p class="provider-description">${provider.description}</p>
-                </div>
-            `).join('');
-        }
-
-        function getTypeLabel(type) {
-            const labels = {
-                veterinario: 'Veterinário',
-                petshop: 'Pet Shop',
-                cuidador: 'Cuidador',
-                adestrador: 'Adestrador'
-            };
-            return labels[type] || type;
-        }
-
-       // Handle form submission
-         document.getElementById('userForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            userProfile = {
-                username: document.getElementById('username').value,
-                description: document.getElementById('description').value,
-                location: document.getElementById('location').value,
-                photo: document.getElementById('photoCircle').style.backgroundImage
-            };
-            
-            // Update profile icon in header
-            const profileIcon = document.querySelector('.profile-icon');
-            if (userProfile.photo) {
-                profileIcon.style.backgroundImage = userProfile.photo;
-                profileIcon.style.backgroundSize = 'cover';
-                profileIcon.innerHTML = '';
-            }
-            
-            toggleModal();
-            alert('Perfil salvo com sucesso!');
-        });
-
-        // Initial render
-        renderProviders();
+document.querySelectorAll(".petsitter-checkbox-item input[type='checkbox']").forEach(x => {
+    x.addEventListener('change', async function() {
+        const valor = this.value;
         
-    </script>
-   </body>
+        if(this.checked) {
+            if(!listaServicos.includes(valor)) {
+                listaServicos.push(valor);
+            }
+        } else {   
+            const index = listaServicos.indexOf(valor);
+            if (index > -1) {    
+                listaServicos.splice(index, 1); 
+            }                                    
+        }
+        console.log(listaServicos);
+    });
+});
+
+// FUNÇÃO PARA INSERIR OS DADOS GERAIS PELO BTN
+document.getElementById("userForm").addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const inserido = await window.inserirDados();
+    if(inserido) {
+        alert('Perfil salvo com sucesso!');
+        toggleModal();
+    }
+});
+
+// Esconder ou Exibir a parte da inserção dos dados gerais
+window.addEventListener('DOMContentLoaded', async function() {
+    let camposPreenchidos = await verificarDados;
+    if(camposPreenchidos < 4 && camposPreenchidos > 0) {
+        document.getElementById('modalOverlay').classList.remove('hidden');
+    } else if(camposPreenchidos === 0) {
+        window.location.href = "login/gsobralpethublogin.html";
+    }
+});
+
+async function toggleModal() {
+    window.location.reload();
+}
+
+// FUNÇÃO PARA LIDAR COM UPLOAD DE FOTO
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validar tamanho (máximo 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('A foto deve ter no máximo 2MB');
+            return;
+        }
+
+        // Validar tipo
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor, selecione uma imagem válida');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const photoCircle = document.getElementById('photoCircle');
+            fotoBase64 = e.target.result; // Armazenar base64 na variável global
+            photoCircle.style.backgroundImage = `url(${fotoBase64})`;
+            photoCircle.style.backgroundSize = 'cover';
+            photoCircle.style.backgroundPosition = 'center';
+            photoCircle.innerHTML = '';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+window.handlePhotoUpload = handlePhotoUpload;
+
+async function filterProviders(type) {
+    currentFilter = type;
+    
+    // Update filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(type) || 
+            (type === 'todos' && btn.textContent === 'Todos')) {
+            btn.classList.add('active');
+        }
+    });
+    
+    await renderProviders();
+}
+window.filterProviders = filterProviders;
+
+async function renderProviders() {
+    const grid = document.getElementById('providersGrid');
+    grid.innerHTML = '<p style="text-align: center; padding: 40px;">⏳ Carregando...</p>';
+    
+    try {
+        console.log('Filtro atual:', currentFilter);
+        
+        if (currentFilter === 'todos') {
+            providersData = await window.buscarPrestadores;
+        } else {
+            providersData = await window.buscarPorTipo(currentFilter);
+        }
+        
+        if (providersData.length === 0) {
+            grid.innerHTML = '<p style="text-align: center; padding: 40px;">😔 Nenhum prestador encontrado.</p>';
+            return;
+        }
+        
+        grid.innerHTML = providersData.map(provider => `
+            <div class="provider-card" onclick="viewProviderProfile(${provider.id})" style="cursor: pointer;">
+                <div class="provider-avatar" style="${provider.avatar ? `background-image: url(${provider.avatar}); background-size: cover; background-position: center;` : 'background-color: #e0e0e0;'} width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 15px;">
+                    ${!provider.avatar ? '👤' : ''}
+                </div>
+                <h3 class="provider-name">${provider.name}</h3>
+                <p class="provider-type">${getTypeLabel(provider.type)}</p>
+                <p class="provider-location">📍 ${provider.location}</p>
+                <p class="provider-description">${provider.description}</p>
+                ${provider.tipoPetSitter ? `<p style="margin-top: 10px; font-size: 14px;"><strong>🐾 Serviços:</strong> ${provider.tipoPetSitter}</p>` : ''}
+            </div>
+        `).join('');
+        
+        console.log(`${providersData.length} prestador(es) exibido(s)`);
+    } catch (erro) {
+        console.error("Erro ao renderizar:", erro);
+        grid.innerHTML = '<p style="text-align: center; padding: 40px; color: red;">❌ Erro ao carregar.</p>';
+    }
+}
+
+function getTypeLabel(type) {
+    const labels = {
+        veterinario: 'Veterinário',
+        petshop: 'Pet Shop',
+        petsitter: 'PetSitter',
+        ong: 'ONG',
+        doador: 'Doador',
+        cuidador: 'Cuidador',
+        adestrador: 'Adestrador'
+    };
+    return labels[type] || type;
+}
+
+// Função para redirecionar para o perfil do prestador
+function viewProviderProfile(providerId) {
+    window.location.href = `perfil-prestador.html?id=${providerId}`;
+}
+window.viewProviderProfile = viewProviderProfile;
+
+window.addEventListener('load', async function() {
+    console.log('🚀 Carregando prestadores automaticamente...');
+    currentFilter = 'todos';
+    await renderProviders();
+});
+</script>
+</body>
 </html>

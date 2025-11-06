@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Prestador</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="perfil-prestador.css">
+</head>
+<body>
+    <body>
+  <!-- Header -->
+  <header class="header">
+    <a href="javascript:history.back()" class="back-btn">
+      ← Voltar
+    </a>
+    <div class="logo">GSobralPetHub</div>
+  </header>
+
+  <!-- Hero Section com Foto -->
+  <section class="hero-profile">
+    <div id="heroContent"></div>
+    <div class="hero-overlay">
+      <h1 class="provider-name-hero" id="providerNameHero">Carregando...</h1>
+      <p class="provider-type-hero" id="providerTypeHero">...</p>
+    </div>
+  </section>
+
+  <!-- Content Section -->
+  <section class="content-section">
+    <div class="info-grid">
+      <!-- Main Info -->
+      <div class="main-info">
+        <h2 class="section-title">Sobre</h2>
+        <p class="description-text" id="providerDescription">
+          Carregando descrição...
+        </p>
+
+        <!-- Services -->
+        <div class="services-section" id="servicesSection" style="display: none;">
+          <h2 class="section-title">Serviços Oferecidos</h2>
+          <div class="services-grid" id="servicesGrid"></div>
+        </div>
+      </div>
+
+      <!-- Side Info -->
+      <div class="side-info">
+        <div class="info-card">
+          <h3 class="section-title">Informações</h3>
+          <div class="info-item">
+            <span class="info-icon">📍</span>
+            <span id="providerLocation">Carregando...</span>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">🏷️</span>
+            <span id="providerTypeInfo">Carregando...</span>
+          </div>
+          <button class="contact-btn" onclick="contactProvider()">Entrar em Contato</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Section -->
+    <div class="products-section" id="productsSection" style="display: none;">
+      <h2 class="section-title">Produtos Disponíveis</h2>
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+    
+    const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Pegar ID do prestador da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const providerId = urlParams.get('id');
+
+    if (!providerId) {
+      alert('Prestador não encontrado!');
+      window.history.back();
+    }
+
+    // Carregar dados do prestador
+    async function loadProviderData() {
+      try {
+        const { data, error } = await client
+          .from("usuario")
+          .select("*")
+          .eq("id", providerId)
+          .single();
+
+        if (error) {
+          console.error("Erro ao carregar prestador:", error);
+          alert("Erro ao carregar dados do prestador");
+          return;
+        }
+
+        // Preencher dados na página
+        document.getElementById('providerNameHero').textContent = data.nomeUsuario || "Nome não informado";
+        document.getElementById('providerTypeHero').textContent = getTypeLabel(data.tipousuario);
+        document.getElementById('providerDescription').textContent = data.descricao || "Sem descrição disponível";
+        document.getElementById('providerLocation').textContent = data.localização || "Localização não informada";
+        document.getElementById('providerTypeInfo').textContent = getTypeLabel(data.tipousuario);
+
+        // Carregar foto
+        const heroContent = document.getElementById('heroContent');
+        if (data.fotoPerfil) {
+          heroContent.innerHTML = `<img src="${data.fotoPerfil}" alt="${data.nomeUsuario}" class="hero-image">`;
+        } else {
+          heroContent.innerHTML = `<div class="no-image">📷</div>`;
+        }
+
+        // Mostrar serviços de PetSitter se existir
+        if (data.tipoPetSitter) {
+          const servicesSection = document.getElementById('servicesSection');
+          servicesSection.style.display = 'block';
+          
+          const services = data.tipoPetSitter.split(',').map(s => s.trim());
+          const servicesGrid = document.getElementById('servicesGrid');
+          
+          servicesGrid.innerHTML = services.map(service => `
+            <div class="service-card">
+              <div class="service-icon">${getServiceIcon(service)}</div>
+              <div class="service-name">${service}</div>
+            </div>
+          `).join('');
+        }
+
+        // Exemplo de produtos (você pode adicionar uma tabela de produtos no Supabase)
+        loadProducts(data.tipousuario);
+
+      } catch (erro) {
+        console.error("Erro:", erro);
+        alert("Erro ao carregar dados");
+      }
+    }
+
+    function getTypeLabel(type) {
+      const labels = {
+        veterinario: 'Veterinário',
+        petshop: 'Pet Shop',
+        petsitter: 'PetSitter',
+        ong: 'ONG',
+        doador: 'Doador',
+        cuidador: 'Cuidador',
+        adestrador: 'Adestrador'
+      };
+      return labels[type] || type;
+    }
+
+    function getServiceIcon(service) {
+      const icons = {
+        'Petsitter Comum': '🐕',
+        'Hospedagem': '🏠',
+        'DogWalker': '🚶',
+        'Hotelzinho': '🏨'
+      };
+      return icons[service] || '🐾';
+    }
+
+    function loadProducts(providerType) {
+      // Exemplo de produtos fictícios baseado no tipo
+      const productsSection = document.getElementById('productsSection');
+      const productsGrid = document.getElementById('productsGrid');
+
+      let products = [];
+
+      if (providerType === 'petshop') {
+        products = [
+          { name: 'Ração Premium', price: 'R$ 89,90', icon: '🍖' },
+          { name: 'Brinquedo', price: 'R$ 29,90', icon: '🎾' },
+          { name: 'Coleira', price: 'R$ 39,90', icon: '🦴' },
+          { name: 'Cama Pet', price: 'R$ 129,90', icon: '🛏️' }
+        ];
+      } else if (providerType === 'veterinario') {
+        products = [
+          { name: 'Consulta', price: 'R$ 150,00', icon: '🩺' },
+          { name: 'Vacina', price: 'R$ 80,00', icon: '💉' },
+          { name: 'Cirurgia', price: 'R$ 500,00', icon: '⚕️' },
+          { name: 'Exame', price: 'R$ 120,00', icon: '🔬' }
+        ];
+      }
+
+      if (products.length > 0) {
+        productsSection.style.display = 'block';
+        productsGrid.innerHTML = products.map(product => `
+          <div class="product-card">
+            <div class="product-image">${product.icon}</div>
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">${product.price}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    window.contactProvider = function() {
+      alert('Funcionalidade de contato em desenvolvimento!\n\nEm breve você poderá enviar mensagens diretas para os prestadores.');
+    };
+
+    // Carregar dados ao iniciar
+    loadProviderData();
+  </script>
+</body>
+</html>
