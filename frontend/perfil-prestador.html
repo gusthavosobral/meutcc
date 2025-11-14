@@ -7,11 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="perfil-prestador.css">
 </head>
+
 <body>
-    <body>
-  <!-- Header -->
+    
   <header class="header">
-    <a href="javascript:history.back()" class="back-btn">
+    <a href="gsobralpethubpaginainicial.html" class="back-btn">
       ← Voltar
     </a>
     <div class="logo">GSobralPetHub</div>
@@ -29,6 +29,7 @@
   <!-- Content Section -->
   <section class="content-section">
     <div class="info-grid">
+      
       <!-- Main Info -->
       <div class="main-info">
         <h2 class="section-title">Sobre</h2>
@@ -36,7 +37,7 @@
           Carregando descrição...
         </p>
 
-        <!-- Services -->
+        <!-- Pet Sitter Services -->
         <div class="services-section" id="servicesSection" style="display: none;">
           <h2 class="section-title">Serviços Oferecidos</h2>
           <div class="services-grid" id="servicesGrid"></div>
@@ -80,7 +81,7 @@
 
     if (!providerId) {
       alert('Prestador não encontrado!');
-      window.history.back();
+      window.location.pathname = "C:/Users/PC/Desktop/gsobralpethub/frontend/gsobralpethubpaginainicial.html"
     }
 
     // Carregar dados do prestador
@@ -107,18 +108,22 @@
 
         // Carregar foto
         const heroContent = document.getElementById('heroContent');
-        if (data.fotoPerfil) {
+        if (data.fotoPerfil) 
+        {
           heroContent.innerHTML = `<img src="${data.fotoPerfil}" alt="${data.nomeUsuario}" class="hero-image">`;
-        } else {
+        }
+        else 
+        {
           heroContent.innerHTML = `<div class="no-image">📷</div>`;
         }
 
         // Mostrar serviços de PetSitter se existir
-        if (data.tipoPetSitter) {
+        if (data.tipoPetSitter) 
+        {
           const servicesSection = document.getElementById('servicesSection');
-          servicesSection.style.display = 'block';
+          servicesSection.style.display = 'block'; // Torna Vísivel se oferecer serviços de petsitter :)
           
-          const services = data.tipoPetSitter.split(',').map(s => s.trim());
+          const services = data.tipoPetSitter.split(',');
           const servicesGrid = document.getElementById('servicesGrid');
           
           servicesGrid.innerHTML = services.map(service => `
@@ -148,6 +153,7 @@
         cuidador: 'Cuidador',
         adestrador: 'Adestrador'
       };
+
       return labels[type] || type;
     }
 

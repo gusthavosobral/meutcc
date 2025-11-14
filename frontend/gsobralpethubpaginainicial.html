@@ -265,7 +265,8 @@
     </div>
 </div>
 
-<script>   
+<script>
+   
 // Email do usuário
 let valorRecebido = localStorage.getItem('email');
 console.log(valorRecebido);
@@ -376,13 +377,11 @@ window.tipoPetSitterVerificado = (async() => {
         .select("tipoPetSitter")
         .eq("email", valorRecebido)
         .eq("tipousuario", "petsitter");
-    
     if(error) {
         console.log("Houve um erro, sinto muito!");
         return null;
-    } else if (!data[0].tipoPetSitter) {
-        return false;
-    } else {
+    } 
+     else {
         return true;
     }
 })();
