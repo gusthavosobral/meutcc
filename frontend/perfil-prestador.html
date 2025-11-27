@@ -107,15 +107,12 @@
         document.getElementById('providerTypeInfo').textContent = getTypeLabel(data.tipousuario);
 
         // Carregar foto
-        const heroContent = document.getElementById('heroContent');
-        if (data.fotoPerfil) 
-        {
-          heroContent.innerHTML = `<img src="${data.fotoPerfil}" alt="${data.nomeUsuario}" class="hero-image">`;
-        }
-        else 
-        {
-          heroContent.innerHTML = `<div class="no-image">📷</div>`;
-        }
+const heroContent = document.getElementById('heroContent');
+if (data.fotoPerfil) {
+  heroContent.innerHTML = `<img src="${data.fotoPerfil}" alt="${data.nomeUsuario}" class="hero-image">`;
+} else {
+  heroContent.innerHTML = `<div class="no-image">📷</div>`;
+}
 
         // Mostrar serviços de PetSitter se existir
         if (data.tipoPetSitter) 
@@ -134,8 +131,8 @@
           `).join('');
         }
 
-        // Exemplo de produtos (você pode adicionar uma tabela de produtos no Supabase)
-        loadProducts(data.tipousuario);
+        
+        loadProductss();
 
       } catch (erro) {
         console.error("Erro:", erro);
@@ -167,47 +164,81 @@
       return icons[service] || '🐾';
     }
 
-    function loadProducts(providerType) {
-      // Exemplo de produtos fictícios baseado no tipo
-      const productsSection = document.getElementById('productsSection');
-      const productsGrid = document.getElementById('productsGrid');
+    // Carregar produtos por Id
 
-      let products = [];
+    // Carregar produtos reais do banco de dados
+async function loadProductss() {
+  try {
+    const {data, error} = await client
+      .from("produto")
+      .select("id, nome, preco, fotoproduto, descricao")
+      .eq("idusuario", providerId);
 
-      if (providerType === 'petshop') {
-        products = [
-          { name: 'Ração Premium', price: 'R$ 89,90', icon: '🍖' },
-          { name: 'Brinquedo', price: 'R$ 29,90', icon: '🎾' },
-          { name: 'Coleira', price: 'R$ 39,90', icon: '🦴' },
-          { name: 'Cama Pet', price: 'R$ 129,90', icon: '🛏️' }
-        ];
-      } else if (providerType === 'veterinario') {
-        products = [
-          { name: 'Consulta', price: 'R$ 150,00', icon: '🩺' },
-          { name: 'Vacina', price: 'R$ 80,00', icon: '💉' },
-          { name: 'Cirurgia', price: 'R$ 500,00', icon: '⚕️' },
-          { name: 'Exame', price: 'R$ 120,00', icon: '🔬' }
-        ];
-      }
-
-      if (products.length > 0) {
-        productsSection.style.display = 'block';
-        productsGrid.innerHTML = products.map(product => `
-          <div class="product-card">
-            <div class="product-image">${product.icon}</div>
-            <div class="product-name">${product.name}</div>
-            <div class="product-price">${product.price}</div>
-          </div>
-        `).join('');
-      }
+    if(error) {
+      console.error("Erro ao carregar produtos:", error);
+      alert(`Ocorreu um erro: ${error.message}`);
+      return false;
     }
 
-    window.contactProvider = function() {
-      alert('Funcionalidade de contato em desenvolvimento!\n\nEm breve você poderá enviar mensagens diretas para os prestadores.');
-    };
+    if(!data || data.length === 0) {
+      console.log("Nenhum produto encontrado para este prestador");
+      // Ocultar a seção se não houver produtos
+      document.getElementById('productsSection').style.display = 'none';
+      return false;
+    }
 
-    // Carregar dados ao iniciar//
-    loadProviderData();
+    console.log("Produtos encontrados:", data);
+
+    // Mostrar a seção de produtos
+    const productsSection = document.getElementById('productsSection');
+    const productsGrid = document.getElementById('productsGrid');
+    
+    productsSection.style.display = 'block';
+    
+   // Criar HTML dos produtos REAIS
+productsGrid.innerHTML = data.map(produto => `
+  <div class="product-card" onclick="goToProduct(${produto.id || 'null'})" style="cursor: pointer;">
+    <div class="product-image">
+      ${produto.fotoproduto 
+        ? `<img src="${produto.fotoproduto}" alt="${produto.nome}">` 
+        : '<div>📦</div>'}
+    </div>
+    <div class="product-info">
+      <div class="product-name">${produto.nome}</div>
+      ${produto.descricao ? `<div class="product-description">${produto.descricao}</div>` : '<div class="product-description">Sem descrição</div>'}
+      <div class="product-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
+    </div>
+  </div>
+`).join('');
+    return true;
+
+  } catch (erro) {
+    console.error("Erro ao carregar produtos:", erro);
+    return false;
+  }
+}
+
+window.contactProvider = function() {
+  alert('Funcionalidade de contato em desenvolvimento!\n\nEm breve você poderá enviar mensagens diretas para os prestadores.');
+};
+
+// Função para redirecionar para página do produto
+window.goToProduct = function(productId) {
+  if (!productId) {
+    alert('ID do produto não encontrado!');
+    return;
+  }
+  // Redirecionar para a página do produto com o ID na URL
+  window.location.href = `produto-detalhes.html?id=${productId}`;
+};
+
+window.contactProvider = function() {
+  alert('Funcionalidade de contato em desenvolvimento!\n\nEm breve você poderá enviar mensagens diretas para os prestadores.');
+};
+
+// Carregar dados ao iniciar
+loadProviderData();
+loadProductss(); // Carregar produtos reais do banco
   </script>
 </body>
 </html>

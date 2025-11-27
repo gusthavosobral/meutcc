@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - GSobralPetHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="finalizar-carrinho.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+      (function(){
+        emailjs.init("ab7Bkacwn0wnT6vZp"); // Substitua pela sua chave
+      })(); 
+    </script>
+</head>
+<body>
+  
+  <header class="header">
+    <a href="carrinho.html" class="back-btn">
+      ← Voltar ao Carrinho
+    </a>
+    <div class="logo">GSobralPetHub</div>
+  </header>
+
+  <div class="container">
+    <!-- Resumo do Pedido -->
+    <div class="section">
+      <h2 class="section-title">Resumo do Pedido</h2>
+      <div id="orderSummary">Carregando...</div>
+    </div>
+
+    <!-- Formulário de Entrega -->
+    <div class="section">
+      <h2 class="section-title">Dados para Entrega</h2>
+      <form id="checkoutForm">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" class="form-input" id="buyerName" placeholder="Seu nome completo" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="buyerEmail" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="tel" class="form-input" id="buyerPhone" placeholder="(00) 00000-0000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CEP</label>
+          <input type="text" class="form-input" id="buyerCep" placeholder="00000-000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Endereço</label>
+          <input type="text" class="form-input" id="buyerAddress" placeholder="Rua, número, complemento" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bairro</label>
+          <input type="text" class="form-input" id="buyerNeighborhood" placeholder="Seu bairro" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cidade</label>
+          <input type="text" class="form-input" id="buyerCity" placeholder="Sua cidade" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Forma de Pagamento</label>
+          <select class="form-select" id="paymentMethod" required>
+            <option value="">Selecione...</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="pix">PIX</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Finalizar Compra
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+    
+    const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let cartProducts = [];
+
+    loadOrderSummary();
+
+    async function loadOrderSummary() {
+      try {
+        const { data: produtos, error } = await client
+          .from("produto")
+          .select("*, usuario:idusuario(nomeUsuario, email)")
+          .eq("carrinho", true);
+
+        if (error || !produtos || produtos.length === 0) {
+          alert('Carrinho vazio!');
+          window.location.href = 'carrinho.html';
+          return;
+        }
+
+        cartProducts = produtos;
+        const total = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
+
+        document.getElementById('orderSummary').innerHTML = `
+          ${produtos.map(produto => `
+            <div class="product-item">
+              <div class="product-image">
+                ${produto.fotoproduto 
+                  ? `<img src="${produto.fotoproduto}" alt="${produto.nome}">` 
+                  : '📦'}
+              </div>
+              <div class="product-info">
+                <div class="product-name">${produto.nome}</div>
+                <div class="product-seller">${produto.usuario?.nomeUsuario || 'Vendedor'}</div>
+              </div>
+              <div class="product-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
+            </div>
+          `).join('')}
+          
+          <div class="total-row">
+            <span>Total</span>
+            <span>R$ ${total.toFixed(2)}</span>
+          </div>
+        `;
+
+      } catch (erro) {
+        console.error('Erro:', erro);
+        alert('Erro ao carregar pedido!');
+      }
+    }
+
+    // Enviar pedidos
+    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.textContent = 'Enviando pedidos...';
+      submitBtn.disabled = true;
+
+      const buyerData = {
+        nome: document.getElementById('buyerName').value,
+        email: document.getElementById('buyerEmail').value,
+        telefone: document.getElementById('buyerPhone').value,
+        cep: document.getElementById('buyerCep').value,
+        endereco: document.getElementById('buyerAddress').value,
+        bairro: document.getElementById('buyerNeighborhood').value,
+        cidade: document.getElementById('buyerCity').value,
+        pagamento: document.getElementById('paymentMethod').value
+      };
+
+      // Agrupar produtos por vendedor
+      const produtosPorVendedor = {};
+      
+      cartProducts.forEach(produto => {
+        const vendedorEmail = produto.usuario.email;
+        if (!produtosPorVendedor[vendedorEmail]) {
+          produtosPorVendedor[vendedorEmail] = {
+            vendedor: produto.usuario,
+            produtos: []
+          };
+        }
+        produtosPorVendedor[vendedorEmail].produtos.push(produto);
+      });
+
+      try {
+        // Enviar um email para cada vendedor
+        for (const vendedorEmail in produtosPorVendedor) {
+          const { vendedor, produtos } = produtosPorVendedor[vendedorEmail];
+          
+          // Formatar lista de produtos
+          const productsList = produtos.map(p => 
+            `• ${p.nome}\n  Preço: R$ ${parseFloat(p.preco).toFixed(2)}`
+          ).join('\n\n');
+
+          const totalVendedor = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
+
+          const emailParams = {
+            to_email: vendedorEmail,
+            seller_name: vendedor.nomeUsuario,
+            products_list: productsList,
+            total_price: totalVendedor.toFixed(2),
+            buyer_name: buyerData.nome,
+            buyer_email: buyerData.email,
+            buyer_phone: buyerData.telefone,
+            buyer_cep: buyerData.cep,
+            buyer_address: buyerData.endereco,
+            buyer_neighborhood: buyerData.bairro,
+            buyer_city: buyerData.cidade,
+            payment_method: getPaymentLabel(buyerData.pagamento)
+          };
+
+          await emailjs.send(
+            'service_gsz8vpt',
+            'template_royhgzn',
+            emailParams
+          );
+        }
+
+        // Limpar carrinho
+        await client
+          .from('produto')
+          .update({ carrinho: false })
+          .in('id', cartProducts.map(p => p.id));
+
+        alert('✅ Pedidos enviados com sucesso!\n\nOs vendedores receberão seus dados e entrarão em contato em breve!');
+        window.location.href = 'gsobralpethubpaginainicial.html';
+
+      } catch (error) {
+        console.error('Erro ao enviar emails:', error);
+        alert('❌ Erro ao enviar pedidos. Tente novamente.');
+      } finally {
+        submitBtn.textContent = 'Finalizar Compra';
+        submitBtn.disabled = false;
+      }
+    });
+
+    function getPaymentLabel(method) {
+      const labels = {
+        'dinheiro': 'Dinheiro',
+        'pix': 'PIX',
+        'cartao_debito': 'Cartão de Débito',
+        'cartao_credito': 'Cartão de Crédito'
+      };
+      return labels[method] || method;
+    }
+
+    // Máscaras
+    document.getElementById('buyerCep').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 5) {
+        value = value.slice(0, 5) + '-' + value.slice(5, 8);
+      }
+      e.target.value = value;
+    });
+
+    document.getElementById('buyerPhone').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 10) {
+        value = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
+      }
+      e.target.value = value;
+    });
+  </script>
+</body>
+</html>

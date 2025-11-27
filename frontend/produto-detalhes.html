@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Produto</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="produto-detalhes.css">
+</head>
+<body>
+  
+  <header class="header">
+    <a onclick="history.back()" class="back-btn">
+      ← Voltar
+    </a>
+    <div class="logo">GSobralPetHub</div>
+  </header>
+
+  <div id="productContent" class="loading">
+    Carregando produto...
+  </div>
+
+  <div id="purchaseModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closePurchaseModal()">&times;</span>
+      <h2 class="modal-title">Finalizar Compra</h2>
+      
+      <form id="purchaseForm">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" class="form-input" id="buyerName" placeholder="Seu nome completo" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="buyerEmail" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="tel" class="form-input" id="buyerPhone" placeholder="(00) 00000-0000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CEP</label>
+          <input type="text" class="form-input" id="buyerCep" placeholder="00000-000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Endereço</label>
+          <input type="text" class="form-input" id="buyerAddress" placeholder="Rua, número, complemento" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bairro</label>
+          <input type="text" class="form-input" id="buyerNeighborhood" placeholder="Seu bairro" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cidade</label>
+          <input type="text" class="form-input" id="buyerCity" placeholder="Sua cidade" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Forma de Pagamento</label>
+          <select class="form-select" id="paymentMethod" required>
+            <option value="">Selecione...</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="pix">PIX</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">
+          Confirmar Pedido
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/+esm";
+    
+    const SUPABASE_URL = "https://kdlhsjtaasqyitrwgawt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentProduct = null;
+
+    // Inicializar EmailJS
+    emailjs.init("ab7Bkacwn0wnT6vZp");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (!productId) {
+      document.getElementById('productContent').innerHTML = `
+        <div class="loading">
+          <p>Produto não encontrado!</p>
+          <button class="btn-primary" onclick="history.back()" style="max-width: 300px; margin: 20px auto;">Voltar</button>
+        </div>
+      `;
+    } else {
+      loadProductDetails();
+    }
+
+    async function loadProductDetails() {
+      try {
+        const { data: produto, error } = await client
+          .from("produto")
+          .select("*, usuario:idusuario(nomeUsuario, localização, email, tipousuario)")
+          .eq("id", productId)
+          .single();
+
+        if (error) {
+          console.error("Erro ao carregar produto:", error);
+          document.getElementById('productContent').innerHTML = `
+            <div class="loading">
+              <p>Erro ao carregar produto!</p>
+              <button class="btn-primary" onclick="history.back()" style="max-width: 300px; margin: 20px auto;">Voltar</button>
+            </div>
+          `;
+          return;
+        }
+
+        currentProduct = produto;
+        const isPetshop = produto.usuario?.tipousuario === 'petshop';
+        const isInCart = produto.carrinho || false;
+
+        document.getElementById('productContent').innerHTML = `
+          <div class="product-container">
+            <div class="product-image-section">
+              ${produto.fotoproduto 
+                ? `<img src="${produto.fotoproduto}" alt="${produto.nome}">` 
+                : '<div class="no-image">📦</div>'}
+            </div>
+            
+            <div class="product-details">
+              <div class="product-header">
+                <h1 class="product-title">${produto.nome}</h1>
+                <div class="product-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
+              </div>
+              
+              <div>
+                <h3 class="section-title">Descrição</h3>
+                <div class="product-description">
+                  ${produto.descricao || 'Sem descrição disponível para este produto.'}
+                </div>
+              </div>
+
+              <div class="seller-info">
+                <h3 class="section-title">Informações do Vendedor</h3>
+                <div class="info-item">
+                  <span class="info-icon">🏪</span>
+                  <span>${produto.usuario?.nomeUsuario || 'Não informado'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">📍</span>
+                  <span>${produto.usuario?.localização || 'Localização não informada'}</span>
+                </div>
+              </div>
+
+              ${isPetshop ? `
+                <div class="shipping-calculator show">
+                  <h3 class="section-title">Calcular Frete</h3>
+                  <div class="cep-input-group">
+                    <input type="text" class="cep-input" id="cepInput" placeholder="00000-000" maxlength="9">
+                    <button class="calculate-btn" onclick="calculateShipping()">Calcular</button>
+                  </div>
+                  <div class="shipping-result" id="shippingResult"></div>
+                </div>
+              ` : ''}
+
+              <div class="action-buttons">
+                <button class="btn-secondary ${isInCart ? 'in-cart' : ''}" id="cartBtn" onclick="toggleCart()">
+                  ${isInCart ? '✓ No Carrinho' : '+ Adicionar ao Carrinho'}
+                </button>
+                <button class="btn-primary" onclick="openPurchaseModal()">
+                  Comprar Agora
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        setupEventListeners();
+
+      } catch (erro) {
+        console.error("Erro:", erro);
+        document.getElementById('productContent').innerHTML = `
+          <div class="loading">
+            <p>Erro inesperado ao carregar produto!</p>
+            <button class="btn-primary" onclick="history.back()" style="max-width: 300px; margin: 20px auto;">Voltar</button>
+          </div>
+        `;
+      }
+    }
+
+    function setupEventListeners() {
+      const cepInput = document.getElementById('cepInput');
+      if (cepInput) {
+        cepInput.addEventListener('input', function(e) {
+          let value = e.target.value.replace(/\D/g, '');
+          if (value.length > 5) {
+            value = value.slice(0, 5) + '-' + value.slice(5, 8);
+          }
+          e.target.value = value;
+        });
+      }
+
+      const buyerCepInput = document.getElementById('buyerCep');
+      if (buyerCepInput) {
+        buyerCepInput.addEventListener('input', function(e) {
+          let value = e.target.value.replace(/\D/g, '');
+          if (value.length > 5) {
+            value = value.slice(0, 5) + '-' + value.slice(5, 8);
+          }
+          e.target.value = value;
+        });
+      }
+
+      const phoneInput = document.getElementById('buyerPhone');
+      if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+          let value = e.target.value.replace(/\D/g, '');
+          if (value.length > 10) {
+            value = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
+          } else if (value.length > 6) {
+            value = '(' + value.slice(0, 2) + ') ' + value.slice(2, 6) + '-' + value.slice(6, 10);
+          } else if (value.length > 2) {
+            value = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+          }
+          e.target.value = value;
+        });
+      }
+
+      const form = document.getElementById('purchaseForm');
+      if (form) {
+        form.addEventListener('submit', handlePurchaseSubmit);
+      }
+    }
+
+    window.calculateShipping = async function() {
+      const cep = document.getElementById('cepInput').value.replace(/\D/g, '');
+      
+      if (cep.length !== 8) {
+        alert('Por favor, insira um CEP válido!');
+        return;
+      }
+
+      const resultDiv = document.getElementById('shippingResult');
+      resultDiv.innerHTML = '<p style="opacity: 0.6;">Calculando frete...</p>';
+      resultDiv.classList.add('show');
+
+      setTimeout(() => {
+        const sedex = (Math.random() * 20 + 15).toFixed(2);
+        const pac = (Math.random() * 10 + 8).toFixed(2);
+        
+        resultDiv.innerHTML = `
+          <div class="shipping-option">
+            <div>
+              <strong>SEDEX</strong>
+              <br><small style="opacity: 0.6;">Entrega em 3-5 dias úteis</small>
+            </div>
+            <strong>R$ ${sedex}</strong>
+          </div>
+          <div class="shipping-option">
+            <div>
+              <strong>PAC</strong>
+              <br><small style="opacity: 0.6;">Entrega em 8-12 dias úteis</small>
+            </div>
+            <strong>R$ ${pac}</strong>
+          </div>
+        `;
+      }, 1500);
+    };
+
+    window.toggleCart = async function() {
+      try {
+        const newCartStatus = !currentProduct.carrinho;
+        
+        const { error } = await client
+          .from('produto')
+          .update({ carrinho: newCartStatus })
+          .eq('id', productId);
+
+        if (error) {
+          console.error('Erro ao atualizar carrinho:', error);
+          alert('Erro ao atualizar carrinho!');
+          return;
+        }
+
+        currentProduct.carrinho = newCartStatus;
+        const cartBtn = document.getElementById('cartBtn');
+        
+        if (newCartStatus) {
+          cartBtn.classList.add('in-cart');
+          cartBtn.textContent = '✓ No Carrinho';
+          alert('Produto adicionado ao carrinho!');
+        } else {
+          cartBtn.classList.remove('in-cart');
+          cartBtn.textContent = '+ Adicionar ao Carrinho';
+          alert('Produto removido do carrinho!');
+        }
+
+      } catch (erro) {
+        console.error('Erro:', erro);
+        alert('Erro ao processar solicitação!');
+      }
+    };
+
+    window.openPurchaseModal = function() {
+      document.getElementById('purchaseModal').classList.add('show');
+    };
+
+    window.closePurchaseModal = function() {
+      document.getElementById('purchaseModal').classList.remove('show');
+    };
+
+    async function handlePurchaseSubmit(e) {
+      e.preventDefault();
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Enviando...';
+      submitBtn.disabled = true;
+
+      const buyerData = {
+        nome: document.getElementById('buyerName').value,
+        email: document.getElementById('buyerEmail').value,
+        telefone: document.getElementById('buyerPhone').value,
+        cep: document.getElementById('buyerCep').value,
+        endereco: document.getElementById('buyerAddress').value,
+        bairro: document.getElementById('buyerNeighborhood').value,
+        cidade: document.getElementById('buyerCity').value,
+        pagamento: document.getElementById('paymentMethod').value
+      };
+
+      const productsList = `- ${currentProduct.nome}`
+      console.log(productsList);
+      const emailParams = {
+        to_email: currentProduct.usuario.email,
+        seller_name: currentProduct.usuario.nomeUsuario,
+        products_list: productsList,
+        total_price: parseFloat(currentProduct.preco).toFixed(2),
+        buyer_name: buyerData.nome,
+        buyer_email: buyerData.email,
+        buyer_phone: buyerData.telefone,
+        buyer_cep: buyerData.cep,
+        buyer_address: buyerData.endereco,
+        buyer_neighborhood: buyerData.bairro,
+        buyer_city: buyerData.cidade,
+        payment_method: getPaymentLabel(buyerData.pagamento)
+      };
+      console.log(emailParams);
+
+      try {
+        await emailjs.send('service_gsz8vpt', 'template_royhgzn' , emailParams);
+        alert(`✅ Pedido enviado com sucesso!\n\nUm email foi enviado para ${currentProduct.usuario.nomeUsuario}.\n\nVocê receberá um contato em breve!`);
+        closePurchaseModal();
+        document.getElementById('purchaseForm').reset();
+      } catch (error) {
+        console.error('Erro ao enviar email:', error);
+        alert('❌ Erro ao enviar pedido. Tente novamente.');
+      } finally {
+        submitBtn.textContent = 'Confirmar Pedido';
+        submitBtn.disabled = false;
+      }
+    }
+
+    function getPaymentLabel(method) {
+      const labels = {
+        'dinheiro': 'Dinheiro',
+        'pix': 'PIX',
+        'cartao_debito': 'Cartão de Débito',
+        'cartao_credito': 'Cartão de Crédito'
+      };
+      return labels[method] || method;
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('purchaseModal');
+      if (event.target === modal) {
+        closePurchaseModal();
+      }
+    };
+  </script>
+</body>
+</html>
