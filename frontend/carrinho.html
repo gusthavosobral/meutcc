@@ -28,25 +28,92 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGhzanRhYXNxeWl0cndnYXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODE0MDksImV4cCI6MjA3MjE1NzQwOX0.xFWJvebljTI334zzD1HeBDT0N2iqn4K8w77ak_GwG14";
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    loadCart();
+    // PEGA O EMAIL DO USUÁRIO LOGADO
+    const emailLogado = localStorage.getItem('email');
+    
+    if (!emailLogado) {
+      document.getElementById('cartContent').innerHTML = `
+        <div class="empty-cart">
+          <div class="empty-cart-icon">⚠️</div>
+          <p class="empty-cart-text">Você precisa estar logado para ver o carrinho</p>
+          <a href="login.html" class="btn-primary">Fazer Login</a>
+        </div>
+      `;
+    } else {
+      inicializarCarrinho();
+    }
 
-    async function loadCart() {
+    async function inicializarCarrinho() {
       try {
-        const { data: produtos, error } = await client
+        console.log('Email logado:', emailLogado);
+        
+        // Busca o usuário pelo email para pegar o ID
+        const { data: usuario, error: erroUsuario } = await client
+          .from('usuario')
+          .select('id')
+          .eq('email', emailLogado)
+          .single();
+
+        if (erroUsuario || !usuario) {
+          console.error('Erro ao buscar usuário:', erroUsuario);
+          document.getElementById('cartContent').innerHTML = `
+            <div class="empty-cart">
+              <div class="empty-cart-icon">⚠️</div>
+              <p class="empty-cart-text">Usuário não encontrado</p>
+              <a href="login.html" class="btn-primary">Fazer Login Novamente</a>
+            </div>
+          `;
+          return;
+        }
+
+        console.log('ID do usuário:', usuario.id);
+
+        // Agora que temos o ID, carrega o carrinho
+        loadCart(usuario.id);
+
+      } catch (erro) {
+        console.error('Erro ao inicializar:', erro);
+        document.getElementById('cartContent').innerHTML = `
+          <div class="empty-cart">
+            <div class="empty-cart-icon">⚠️</div>
+            <p class="empty-cart-text">Erro ao carregar carrinho</p>
+          </div>
+        `;
+      }
+    }
+
+    async function loadCart(userId) {
+      try {
+        console.log('Carregando carrinho para usuário:', userId);
+        
+        // Busca TODOS os produtos com carrinho = true
+        const { data: todosProdutos, error } = await client
           .from("produto")
           .select("*, usuario:idusuario(nomeUsuario)")
           .eq("carrinho", true);
 
         if (error) {
-          console.error("Erro ao carregar carrinho:", error);
+          console.error("Erro ao carregar produtos:", error);
           document.getElementById('cartContent').innerHTML = `
             <div class="empty-cart">
               <div class="empty-cart-icon">⚠️</div>
-              <p class="empty-cart-text">Erro ao carregar carrinho</p>
+              <p class="empty-cart-text">Erro ao carregar carrinho: ${error.message}</p>
             </div>
           `;
           return;
         }
+
+        console.log('Todos os produtos com carrinho=true:', todosProdutos);
+
+        // Filtra manualmente os produtos que contém o ID do usuário no array idcomprador
+        const produtos = todosProdutos.filter(produto => {
+          const compradores = produto.idcomprador || [];
+          console.log(`Produto ${produto.id} - Compradores:`, compradores);
+          // Verifica se o array contém o userId (como número ou string)
+          return compradores.includes(userId) || compradores.includes(String(userId));
+        });
+
+        console.log('Produtos filtrados para este usuário:', produtos);
 
         if (!produtos || produtos.length === 0) {
           document.getElementById('cartContent').innerHTML = `
@@ -59,7 +126,6 @@
           return;
         }
 
-        // Calcular total
         const total = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
 
         document.getElementById('cartContent').innerHTML = `
@@ -80,7 +146,7 @@
                   <div class="item-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
                   <div class="btn-group">
                     <a href="produto-detalhes.html?id=${produto.id}" class="btn-view">Ver Produto</a>
-                    <button class="btn-remove" onclick="removeFromCart(${produto.id})">Remover</button>
+                    <button class="btn-remove" onclick="removeFromCart(${produto.id}, ${userId})">Remover</button>
                   </div>
                 </div>
               </div>
@@ -107,31 +173,61 @@
         document.getElementById('cartContent').innerHTML = `
           <div class="empty-cart">
             <div class="empty-cart-icon">⚠️</div>
-            <p class="empty-cart-text">Erro inesperado ao carregar carrinho</p>
+            <p class="empty-cart-text">Erro inesperado: ${erro.message}</p>
           </div>
         `;
       }
     }
 
-    window.removeFromCart = async function(productId) {
+    window.removeFromCart = async function(productId, userId) {
       if (!confirm('Deseja remover este produto do carrinho?')) {
         return;
       }
 
       try {
+        console.log('Removendo produto:', productId, 'para usuário:', userId);
+        
+        // Busca o produto atual para pegar o array de compradores
+        const { data: produto, error: erroGet } = await client
+          .from('produto')
+          .select('idcomprador, carrinho')
+          .eq('id', productId)
+          .single();
+
+        if (erroGet) {
+          console.error('Erro ao buscar produto:', erroGet);
+          alert('Erro ao remover produto do carrinho!');
+          return;
+        }
+
+        console.log('Produto antes da remoção:', produto);
+
+        // Remove o ID do usuário do array
+        let compradores = produto.idcomprador || [];
+        compradores = compradores.filter(id => {
+          // Compara tanto como número quanto string
+          return String(id) !== String(userId) && Number(id) !== Number(userId);
+        });
+
+        console.log('Compradores após remoção:', compradores);
+
+        // Atualiza o produto
         const { error } = await client
           .from('produto')
-          .update({ carrinho: false })
+          .update({ 
+            idcomprador: compradores,
+            carrinho: compradores.length > 0 // Se não tem mais ninguém, marca como false
+          })
           .eq('id', productId);
 
         if (error) {
-          console.error('Erro ao remover produto:', error);
+          console.error('Erro ao atualizar produto:', error);
           alert('Erro ao remover produto do carrinho!');
           return;
         }
 
         alert('Produto removido do carrinho!');
-        loadCart(); // Recarregar carrinho
+        loadCart(userId);
 
       } catch (erro) {
         console.error('Erro:', erro);

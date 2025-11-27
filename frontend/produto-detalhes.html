@@ -277,39 +277,101 @@
       }, 1500);
     };
 
-    window.toggleCart = async function() {
-      try {
-        const newCartStatus = !currentProduct.carrinho;
-        
-        const { error } = await client
-          .from('produto')
-          .update({ carrinho: newCartStatus })
-          .eq('id', productId);
+    // Adicionar/Remover do carrinho
+window.toggleCart = async function() {
+  try {
+    // Pega o email do usuário logado
+    const emailLogado = localStorage.getItem('email');
+    
+    if (!emailLogado) {
+      alert('Você precisa estar logado para adicionar produtos ao carrinho!');
+      window.location.href = 'login.html';
+      return;
+    }
 
-        if (error) {
-          console.error('Erro ao atualizar carrinho:', error);
-          alert('Erro ao atualizar carrinho!');
-          return;
-        }
+    // Busca o ID do usuário pelo email
+    const { data: usuario, error: erroUsuario } = await client
+      .from('usuario')
+      .select('id')
+      .eq('email', emailLogado)
+      .single();
 
-        currentProduct.carrinho = newCartStatus;
-        const cartBtn = document.getElementById('cartBtn');
-        
-        if (newCartStatus) {
-          cartBtn.classList.add('in-cart');
-          cartBtn.textContent = '✓ No Carrinho';
-          alert('Produto adicionado ao carrinho!');
-        } else {
-          cartBtn.classList.remove('in-cart');
-          cartBtn.textContent = '+ Adicionar ao Carrinho';
-          alert('Produto removido do carrinho!');
-        }
+    if (erroUsuario || !usuario) {
+      alert('Erro ao identificar usuário. Faça login novamente.');
+      return;
+    }
 
-      } catch (erro) {
-        console.error('Erro:', erro);
-        alert('Erro ao processar solicitação!');
-      }
-    };
+    const userId = usuario.id;
+    console.log('ID do usuário logado:', userId);
+
+    // Busca o produto atual para pegar o array de compradores
+    const { data: produtoAtual, error: erroProduto } = await client
+      .from('produto')
+      .select('idcomprador, carrinho')
+      .eq('id', productId)
+      .single();
+
+    if (erroProduto) {
+      console.error('Erro ao buscar produto:', erroProduto);
+      alert('Erro ao atualizar carrinho!');
+      return;
+    }
+
+    console.log('Produto atual:', produtoAtual);
+
+    // Pega o array de compradores (ou cria um vazio)
+    let compradores = produtoAtual.idcomprador || [];
+    
+    // Verifica se o usuário já está no array
+    const jaEstaNoCarrinho = compradores.includes(userId) || compradores.includes(String(userId));
+
+    let novoStatus;
+    if (jaEstaNoCarrinho) {
+      // REMOVE do carrinho
+      compradores = compradores.filter(id => String(id) !== String(userId) && Number(id) !== Number(userId));
+      novoStatus = false;
+    } else {
+      // ADICIONA ao carrinho
+      compradores.push(userId);
+      novoStatus = true;
+    }
+
+    console.log('Novo array de compradores:', compradores);
+
+    // Atualiza o produto
+    const { error } = await client
+      .from('produto')
+      .update({ 
+        idcomprador: compradores,
+        carrinho: compradores.length > 0 // true se tem pelo menos 1 comprador
+      })
+      .eq('id', productId);
+
+    if (error) {
+      console.error('Erro ao atualizar carrinho:', error);
+      alert('Erro ao atualizar carrinho!');
+      return;
+    }
+
+    // Atualiza a interface
+    currentProduct.carrinho = novoStatus;
+    const cartBtn = document.getElementById('cartBtn');
+    
+    if (novoStatus) {
+      cartBtn.classList.add('in-cart');
+      cartBtn.textContent = '✓ No Carrinho';
+      alert('Produto adicionado ao carrinho!');
+    } else {
+      cartBtn.classList.remove('in-cart');
+      cartBtn.textContent = '+ Adicionar ao Carrinho';
+      alert('Produto removido do carrinho!');
+    }
+
+  } catch (erro) {
+    console.error('Erro:', erro);
+    alert('Erro ao processar solicitação!');
+  }
+};
 
     window.openPurchaseModal = function() {
       document.getElementById('purchaseModal').classList.add('show');
