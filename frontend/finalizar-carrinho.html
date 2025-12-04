@@ -98,133 +98,188 @@
     loadOrderSummary();
 
     async function loadOrderSummary() {
-      try {
-        const { data: produtos, error } = await client
-          .from("produto")
-          .select("*, usuario:idusuario(nomeUsuario, email)")
-          .eq("carrinho", true);
-
-        if (error || !produtos || produtos.length === 0) {
-          alert('Carrinho vazio!');
-          window.location.href = 'carrinho.html';
-          return;
-        }
-
-        cartProducts = produtos;
-        const total = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
-
-        document.getElementById('orderSummary').innerHTML = `
-          ${produtos.map(produto => `
-            <div class="product-item">
-              <div class="product-image">
-                ${produto.fotoproduto 
-                  ? `<img src="${produto.fotoproduto}" alt="${produto.nome}">` 
-                  : '📦'}
-              </div>
-              <div class="product-info">
-                <div class="product-name">${produto.nome}</div>
-                <div class="product-seller">${produto.usuario?.nomeUsuario || 'Vendedor'}</div>
-              </div>
-              <div class="product-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
-            </div>
-          `).join('')}
-          
-          <div class="total-row">
-            <span>Total</span>
-            <span>R$ ${total.toFixed(2)}</span>
-          </div>
-        `;
-
-      } catch (erro) {
-        console.error('Erro:', erro);
-        alert('Erro ao carregar pedido!');
-      }
+  try {
+    const emailLogado = localStorage.getItem('email');
+    
+    if (!emailLogado) {
+      alert('Você precisa estar logado!');
+      window.location.href = 'login.html';
+      return;
     }
 
-    // Enviar pedidos
-    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+    // Busca o ID do usuário
+    const { data: usuario, error: erroUsuario } = await client
+      .from('usuario')
+      .select('id')
+      .eq('email', emailLogado)
+      .single();
 
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.textContent = 'Enviando pedidos...';
-      submitBtn.disabled = true;
+    if (erroUsuario || !usuario) {
+      alert('Erro ao identificar usuário!');
+      return;
+    }
 
-      const buyerData = {
-        nome: document.getElementById('buyerName').value,
-        email: document.getElementById('buyerEmail').value,
-        telefone: document.getElementById('buyerPhone').value,
-        cep: document.getElementById('buyerCep').value,
-        endereco: document.getElementById('buyerAddress').value,
-        bairro: document.getElementById('buyerNeighborhood').value,
-        cidade: document.getElementById('buyerCity').value,
-        pagamento: document.getElementById('paymentMethod').value
+    const userId = usuario.id;
+
+    // Busca os produtos no carrinho COM OS DADOS DO PRODUTO E DO VENDEDOR
+    const { data: produtos, error } = await client
+      .from("carrinho")
+      .select(`
+        *,
+        produto:idproduto (
+          id,
+          nome,
+          descricao,
+          preco,
+          fotoproduto,
+          idusuario,
+          usuario:idusuario (
+            id,
+            nomeUsuario,
+            email
+          )
+        )
+      `)
+      .eq("idcomprador", userId);
+
+    if (error) {
+      console.error('Erro ao buscar carrinho:', error);
+      alert('Erro ao carregar carrinho!');
+      return;
+    }
+
+    if (!produtos || produtos.length === 0) {
+      alert('Carrinho vazio!');
+      window.location.href = 'carrinho.html';
+      return;
+    }
+
+    cartProducts = produtos;
+    const total = produtos.reduce((sum, p) => sum + parseFloat(p.produto?.preco || 0), 0);
+
+    document.getElementById('orderSummary').innerHTML = `
+      ${produtos.map(item => `
+        <div class="product-item">
+          <div class="product-image">
+            ${item.produto?.fotoproduto 
+              ? `<img src="${item.produto.fotoproduto}" alt="${item.produto.nome}">` 
+              : '📦'}
+          </div>
+          <div class="product-info">
+            <div class="product-name">${item.produto?.nome || 'Sem nome'}</div>
+            <div class="product-seller">${item.produto?.usuario?.nomeUsuario || 'Vendedor'}</div>
+          </div>
+          <div class="product-price">R$ ${parseFloat(item.produto?.preco || 0).toFixed(2)}</div>
+        </div>
+      `).join('')}
+      
+      <div class="total-row">
+        <span>Total</span>
+        <span>R$ ${total.toFixed(2)}</span>
+      </div>
+    `;
+
+  } catch (erro) {
+    console.error('Erro:', erro);
+    alert('Erro ao carregar pedido!');
+  }
+}
+
+// Enviar pedidos
+document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.textContent = 'Enviando pedidos...';
+  submitBtn.disabled = true;
+
+  const buyerData = {
+    nome: document.getElementById('buyerName').value,
+    email: document.getElementById('buyerEmail').value,
+    telefone: document.getElementById('buyerPhone').value,
+    cep: document.getElementById('buyerCep').value,
+    endereco: document.getElementById('buyerAddress').value,
+    bairro: document.getElementById('buyerNeighborhood').value,
+    cidade: document.getElementById('buyerCity').value,
+    pagamento: document.getElementById('paymentMethod').value
+  };
+
+  // Agrupar produtos por vendedor
+  const produtosPorVendedor = {};
+  
+  cartProducts.forEach(item => {
+    const vendedorEmail = item.produto?.usuario?.email;
+    if (!vendedorEmail) return;
+    
+    if (!produtosPorVendedor[vendedorEmail]) {
+      produtosPorVendedor[vendedorEmail] = {
+        vendedor: item.produto.usuario,
+        produtos: []
+      };
+    }
+    produtosPorVendedor[vendedorEmail].produtos.push(item.produto);
+  });
+
+  try {
+    const emailLogado = localStorage.getItem('email');
+    const { data: usuario } = await client
+      .from('usuario')
+      .select('id')
+      .eq('email', emailLogado)
+      .single();
+
+    const userId = usuario.id;
+
+    // Enviar um email para cada vendedor
+    for (const vendedorEmail in produtosPorVendedor) {
+      const { vendedor, produtos } = produtosPorVendedor[vendedorEmail];
+      
+      // Formatar lista de produtos
+      const productsList = produtos.map(p => 
+        `• ${p.nome}\n  Preço: R$ ${parseFloat(p.preco).toFixed(2)}`
+      ).join('\n\n');
+
+      const totalVendedor = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
+
+      const emailParams = {
+        to_email: vendedorEmail,
+        seller_name: vendedor.nomeUsuario,
+        products_list: productsList,
+        total_price: totalVendedor.toFixed(2),
+        buyer_name: buyerData.nome,
+        buyer_email: buyerData.email,
+        buyer_phone: buyerData.telefone,
+        buyer_cep: buyerData.cep,
+        buyer_address: buyerData.endereco,
+        buyer_neighborhood: buyerData.bairro,
+        buyer_city: buyerData.cidade,
+        payment_method: getPaymentLabel(buyerData.pagamento)
       };
 
-      // Agrupar produtos por vendedor
-      const produtosPorVendedor = {};
-      
-      cartProducts.forEach(produto => {
-        const vendedorEmail = produto.usuario.email;
-        if (!produtosPorVendedor[vendedorEmail]) {
-          produtosPorVendedor[vendedorEmail] = {
-            vendedor: produto.usuario,
-            produtos: []
-          };
-        }
-        produtosPorVendedor[vendedorEmail].produtos.push(produto);
-      });
+      await emailjs.send(
+        'service_gsz8vpt',
+        'template_royhgzn',
+        emailParams
+      );
+    }
 
-      try {
-        // Enviar um email para cada vendedor
-        for (const vendedorEmail in produtosPorVendedor) {
-          const { vendedor, produtos } = produtosPorVendedor[vendedorEmail];
-          
-          // Formatar lista de produtos
-          const productsList = produtos.map(p => 
-            `• ${p.nome}\n  Preço: R$ ${parseFloat(p.preco).toFixed(2)}`
-          ).join('\n\n');
+    // Limpar carrinho - DELETAR os registros da tabela carrinho
+    await client
+      .from('carrinho')
+      .delete()
+      .eq('idcomprador', userId);
 
-          const totalVendedor = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
+    alert('✅ Pedidos enviados com sucesso!\n\nOs vendedores receberão seus dados e entrarão em contato em breve!');
+    window.location.href = 'gsobralpethubpaginainicial.html';
 
-          const emailParams = {
-            to_email: vendedorEmail,
-            seller_name: vendedor.nomeUsuario,
-            products_list: productsList,
-            total_price: totalVendedor.toFixed(2),
-            buyer_name: buyerData.nome,
-            buyer_email: buyerData.email,
-            buyer_phone: buyerData.telefone,
-            buyer_cep: buyerData.cep,
-            buyer_address: buyerData.endereco,
-            buyer_neighborhood: buyerData.bairro,
-            buyer_city: buyerData.cidade,
-            payment_method: getPaymentLabel(buyerData.pagamento)
-          };
-
-          await emailjs.send(
-            'service_gsz8vpt',
-            'template_royhgzn',
-            emailParams
-          );
-        }
-
-        // Limpar carrinho
-        await client
-          .from('produto')
-          .update({ carrinho: false })
-          .in('id', cartProducts.map(p => p.id));
-
-        alert('✅ Pedidos enviados com sucesso!\n\nOs vendedores receberão seus dados e entrarão em contato em breve!');
-        window.location.href = 'gsobralpethubpaginainicial.html';
-
-      } catch (error) {
-        console.error('Erro ao enviar emails:', error);
-        alert('❌ Erro ao enviar pedidos. Tente novamente.');
-      } finally {
-        submitBtn.textContent = 'Finalizar Compra';
-        submitBtn.disabled = false;
-      }
-    });
+  } catch (error) {
+    console.error('Erro ao enviar emails:', error);
+    alert('❌ Erro ao enviar pedidos. Tente novamente.');
+  } finally {
+    submitBtn.textContent = 'Finalizar Compra';
+    submitBtn.disabled = false;
+  }
+});
 
     function getPaymentLabel(method) {
       const labels = {

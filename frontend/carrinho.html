@@ -67,9 +67,11 @@
         }
 
         console.log('ID do usuário:', usuario.id);
+        
 
         // Agora que temos o ID, carrega o carrinho
-        loadCart(usuario.id);
+        const userId = usuario.id;
+        loadCart(userId);
 
       } catch (erro) {
         console.error('Erro ao inicializar:', erro);
@@ -86,11 +88,20 @@
       try {
         console.log('Carregando carrinho para usuário:', userId);
         
-        // Busca TODOS os produtos com carrinho = true
+        // Busca TODOS os produtos no carrinho
         const { data: todosProdutos, error } = await client
-          .from("produto")
-          .select("*, usuario:idusuario(nomeUsuario)")
-          .eq("carrinho", true);
+      .from("carrinho")
+      .select(`
+        *,
+      produto:idproduto (
+      id,
+      nome,
+      descricao,
+      preco,
+      fotoproduto
+      )
+      `)
+  .eq("idcomprador", userId);
 
         if (error) {
           console.error("Erro ao carregar produtos:", error);
@@ -103,15 +114,13 @@
           return;
         }
 
-        console.log('Todos os produtos com carrinho=true:', todosProdutos);
+        console.log('Todos os produtos no carrinho', todosProdutos);
 
-        // Filtra manualmente os produtos que contém o ID do usuário no array idcomprador
-        const produtos = todosProdutos.filter(produto => {
-          const compradores = produto.idcomprador || [];
-          console.log(`Produto ${produto.id} - Compradores:`, compradores);
-          // Verifica se o array contém o userId (como número ou string)
-          return compradores.includes(userId) || compradores.includes(String(userId));
-        });
+       const produtos = todosProdutos.filter(produto => {
+      console.log(`Produto ${produto.id} - idcomprador:`, produto.idcomprador);
+      // Compara direto o ID (número com número)
+      return produto.idcomprador === userId;
+});
 
         console.log('Produtos filtrados para este usuário:', produtos);
 
@@ -129,44 +138,43 @@
         const total = produtos.reduce((sum, p) => sum + parseFloat(p.preco), 0);
 
         document.getElementById('cartContent').innerHTML = `
-          <div class="cart-items">
-            ${produtos.map(produto => `
-              <div class="cart-item">
-                <div class="item-image">
-                  ${produto.fotoproduto 
-                    ? `<img src="${produto.fotoproduto}" alt="${produto.nome}">` 
-                    : '<div class="no-image">📦</div>'}
-                </div>
-                <div class="item-info">
-                  <div class="item-name">${produto.nome}</div>
-                  <div class="item-description">${produto.descricao || 'Sem descrição'}</div>
-                  <div class="item-seller">Vendido por: ${produto.usuario?.nomeUsuario || 'Não informado'}</div>
-                </div>
-                <div class="item-actions">
-                  <div class="item-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
-                  <div class="btn-group">
-                    <a href="produto-detalhes.html?id=${produto.id}" class="btn-view">Ver Produto</a>
-                    <button class="btn-remove" onclick="removeFromCart(${produto.id}, ${userId})">Remover</button>
-                  </div>
-                </div>
-              </div>
-            `).join('')}
+  <div class="cart-items">
+    ${produtos.map(item => `
+      <div class="cart-item">
+        <div class="item-image">
+          ${item.produto?.fotoproduto 
+            ? `<img src="${item.produto.fotoproduto}" alt="${item.produto.nome}">` 
+            : '<div class="no-image">📦</div>'}
+        </div>
+        <div class="item-info">
+          <div class="item-name">${item.produto?.nome || 'Sem nome'}</div>
+          <div class="item-description">${item.produto?.descricao || 'Sem descrição'}</div>
+        </div>
+        <div class="item-actions">
+          <div class="item-price">R$ ${parseFloat(item.produto?.preco || 0).toFixed(2)}</div>
+          <div class="btn-group">
+            <a href="produto-detalhes.html?id=${item.idproduto}" class="btn-view">Ver Produto</a>
+            <button class="btn-remove" onclick="removeFromCart(${item.idproduto}, ${userId})">Remover</button>
           </div>
+        </div>
+      </div>
+    `).join('')}
+  </div>
 
-          <div class="cart-summary">
-            <div class="summary-row">
-              <span>Subtotal (${produtos.length} ${produtos.length === 1 ? 'item' : 'itens'})</span>
-              <span>R$ ${total.toFixed(2)}</span>
-            </div>
-            <div class="summary-row">
-              <span>Total</span>
-              <span>R$ ${total.toFixed(2)}</span>
-            </div>
-            <a href="finalizar-carrinho.html" class="btn-checkout">
-              Finalizar Compra
-            </a>
-          </div>
-        `;
+  <div class="cart-summary">
+    <div class="summary-row">
+      <span>Subtotal (${produtos.length} ${produtos.length === 1 ? 'item' : 'itens'})</span>
+      <span>R$ ${produtos.reduce((sum, item) => sum + parseFloat(item.produto?.preco || 0), 0).toFixed(2)}</span>
+    </div>
+    <div class="summary-row">
+      <span>Total</span>
+      <span>R$ ${produtos.reduce((sum, item) => sum + parseFloat(item.produto?.preco || 0), 0).toFixed(2)}</span>
+    </div>
+    <a href="finalizar-carrinho.html" class="btn-checkout">
+      Finalizar Compra
+    </a>
+  </div>
+`;
 
       } catch (erro) {
         console.error("Erro:", erro);
@@ -189,9 +197,10 @@
         
         // Busca o produto atual para pegar o array de compradores
         const { data: produto, error: erroGet } = await client
-          .from('produto')
-          .select('idcomprador, carrinho')
-          .eq('id', productId)
+          .from('carrinho')
+          .delete()
+          .eq('idproduto', productId)
+          .eq('idcomprador',userId)
           .single();
 
         if (erroGet) {
@@ -201,30 +210,6 @@
         }
 
         console.log('Produto antes da remoção:', produto);
-
-        // Remove o ID do usuário do array
-        let compradores = produto.idcomprador || [];
-        compradores = compradores.filter(id => {
-          // Compara tanto como número quanto string
-          return String(id) !== String(userId) && Number(id) !== Number(userId);
-        });
-
-        console.log('Compradores após remoção:', compradores);
-
-        // Atualiza o produto
-        const { error } = await client
-          .from('produto')
-          .update({ 
-            idcomprador: compradores,
-            carrinho: compradores.length > 0 // Se não tem mais ninguém, marca como false
-          })
-          .eq('id', productId);
-
-        if (error) {
-          console.error('Erro ao atualizar produto:', error);
-          alert('Erro ao remover produto do carrinho!');
-          return;
-        }
 
         alert('Produto removido do carrinho!');
         loadCart(userId);

@@ -110,9 +110,14 @@
       try {
         const { data: produto, error } = await client
           .from("produto")
-          .select("*, usuario:idusuario(nomeUsuario, localização, email, tipousuario)")
+          .select("*, usuario:idusuario(nomeUsuario, localização, email, tipousuario,id)")
           .eq("id", productId)
+          .eq("")
           .single();
+        
+          let usuarioId = produto.usuario.id;
+
+          
 
         if (error) {
           console.error("Erro ao carregar produto:", error);
@@ -125,9 +130,16 @@
           return;
         }
 
+        const {data:carrinhoItem, error:carrinhoError} = await client
+        .from("carrinho")
+        .select("id")
+        .eq("idproduto", productId)
+        .eq("idcomprador", usuarioId)
+        .maybeSingle();
+
         currentProduct = produto;
         const isPetshop = produto.usuario?.tipousuario === 'petshop';
-        const isInCart = produto.carrinho || false;
+        const isInCart = !!carrinhoItem 
 
         document.getElementById('productContent').innerHTML = `
           <div class="product-container">
@@ -202,7 +214,7 @@
       const cepInput = document.getElementById('cepInput');
       if (cepInput) {
         cepInput.addEventListener('input', function(e) {
-          let value = e.target.value.replace(/\D/g, '');
+          let value = e.target.value.replace(/\D/g, '');   // substitui tudo que não for número por ''(nada)//
           if (value.length > 5) {
             value = value.slice(0, 5) + '-' + value.slice(5, 8);
           }
@@ -210,17 +222,7 @@
         });
       }
 
-      const buyerCepInput = document.getElementById('buyerCep');
-      if (buyerCepInput) {
-        buyerCepInput.addEventListener('input', function(e) {
-          let value = e.target.value.replace(/\D/g, '');
-          if (value.length > 5) {
-            value = value.slice(0, 5) + '-' + value.slice(5, 8);
-          }
-          e.target.value = value;
-        });
-      }
-
+  
       const phoneInput = document.getElementById('buyerPhone');
       if (phoneInput) {
         phoneInput.addEventListener('input', function(e) {
@@ -280,7 +282,6 @@
     // Adicionar/Remover do carrinho
 window.toggleCart = async function() {
   try {
-    // Pega o email do usuário logado
     const emailLogado = localStorage.getItem('email');
     
     if (!emailLogado) {
@@ -304,57 +305,71 @@ window.toggleCart = async function() {
     const userId = usuario.id;
     console.log('ID do usuário logado:', userId);
 
-    // Busca o produto atual para pegar o array de compradores
+    // Busca o produto na tabela carrinho
     const { data: produtoAtual, error: erroProduto } = await client
-      .from('produto')
-      .select('idcomprador, carrinho')
-      .eq('id', productId)
-      .single();
+      .from('carrinho')
+      .select('*')
+      .eq('idproduto', productId)
+      .eq('idcomprador', userId)
+      .single(); // ← ADICIONE O .single()
 
+    let jaEstaNoCarrinho;
+
+    // CORREÇÃO: Quando não encontra, .single() retorna ERRO com código PGRST116
     if (erroProduto) {
-      console.error('Erro ao buscar produto:', erroProduto);
-      alert('Erro ao atualizar carrinho!');
-      return;
+      if (erroProduto.code === 'PGRST116') {
+        // Código PGRST116 = nenhum registro encontrado
+        console.log("Produto NÃO está no carrinho");
+        jaEstaNoCarrinho = false;
+      } else {
+        // Outro tipo de erro
+        console.error('Erro ao buscar produto:', erroProduto);
+        alert('Erro ao atualizar carrinho!');
+        return;
+      }
+    } else {
+      // Encontrou o produto
+      console.log("Produto JÁ está no carrinho:", produtoAtual);
+      jaEstaNoCarrinho = true;
     }
-
-    console.log('Produto atual:', produtoAtual);
-
-    // Pega o array de compradores (ou cria um vazio)
-    let compradores = produtoAtual.idcomprador || [];
     
-    // Verifica se o usuário já está no array
-    const jaEstaNoCarrinho = compradores.includes(userId) || compradores.includes(String(userId));
-
     let novoStatus;
+    
     if (jaEstaNoCarrinho) {
       // REMOVE do carrinho
-      compradores = compradores.filter(id => String(id) !== String(userId) && Number(id) !== Number(userId));
+      const { error } = await client
+        .from('carrinho')
+        .delete()
+        .eq('idproduto', productId)
+        .eq('idcomprador', userId);
+
+      if (error) {
+        console.error('Erro ao remover:', error);
+        alert('Erro ao remover produto do carrinho!');
+        return;
+      }
+      
       novoStatus = false;
-    } else {
+    } 
+    else {
       // ADICIONA ao carrinho
-      compradores.push(userId);
+      const { error } = await client
+        .from('carrinho')
+        .insert([{
+          idproduto: productId,
+          idcomprador: userId
+        }]);
+
+      if (error) {
+        console.error('Erro ao inserir:', error);
+        alert('Erro ao adicionar produto ao carrinho!');
+        return;
+      }
+      
       novoStatus = true;
     }
 
-    console.log('Novo array de compradores:', compradores);
-
-    // Atualiza o produto
-    const { error } = await client
-      .from('produto')
-      .update({ 
-        idcomprador: compradores,
-        carrinho: compradores.length > 0 // true se tem pelo menos 1 comprador
-      })
-      .eq('id', productId);
-
-    if (error) {
-      console.error('Erro ao atualizar carrinho:', error);
-      alert('Erro ao atualizar carrinho!');
-      return;
-    }
-
     // Atualiza a interface
-    currentProduct.carrinho = novoStatus;
     const cartBtn = document.getElementById('cartBtn');
     
     if (novoStatus) {
